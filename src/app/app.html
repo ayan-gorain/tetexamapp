@@ -1,0 +1,121 @@
+<!-- 1. Full Screen Initial Loading State (While Firebase verifies session) -->
+<div *ngIf="isAuthLoading && !currentUser" class="auth-loading-screen d-flex flex-column align-items-center justify-content-center">
+  <div class="auth-loading-card text-center p-4">
+    <div class="brand-icon-box-lg rounded-4 mx-auto mb-3 d-flex align-items-center justify-content-center text-white shadow-lg animate__animated animate__pulse animate__infinite">
+      <i class="bi bi-mortarboard-fill fs-1"></i>
+    </div>
+    <h4 class="fw-bold text-white mb-2 font-display">{{ 'app.title' | translate }}</h4>
+    <div class="spinner-border text-primary my-3" role="status" style="width: 2.5rem; height: 2.5rem;">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="text-white-50 small mb-0">{{ 'auth.loadingApp' | translate }}</p>
+  </div>
+</div>
+
+<!-- 2. Secure Auth Gate (Rendered exclusively when NOT logged in) -->
+<!-- NO APP CONTENT OR ROUTER IS RENDERED OR ACCESSIBLE UNTIL GOOGLE LOGIN SUCCEEDS -->
+<div *ngIf="!currentUser && !isAuthLoading" class="auth-page-wrapper d-flex align-items-center justify-content-center p-3">
+  <!-- Subtle decorative background glow shapes -->
+  <div class="auth-bg-blob auth-blob-1"></div>
+  <div class="auth-bg-blob auth-blob-2"></div>
+
+  <div class="auth-card-container w-100 position-relative z-1">
+    <div class="auth-dialog-card rounded-4 p-4 text-center border shadow-lg">
+      
+      <!-- Top Branding Icon -->
+      <div class="brand-icon-box-lg rounded-4 mx-auto mb-3 d-flex align-items-center justify-content-center text-white shadow">
+        <i class="bi bi-mortarboard-fill fs-2"></i>
+      </div>
+
+      <!-- Badge -->
+      <div class="mb-2">
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 fw-bold small">
+          {{ 'app.title' | translate }} • {{ 'dashboard.heroBadge' | translate }}
+        </span>
+      </div>
+
+      <!-- Heading -->
+      <h2 class="fw-bold font-display text-dark mb-2 fs-4">
+        {{ 'auth.dialogTitle' | translate }}
+      </h2>
+
+      <!-- Description -->
+      <p class="text-muted small bengali-text mb-3" style="line-height: 1.6; font-size: 0.9rem;">
+        {{ 'auth.dialogSubtitle' | translate }}
+      </p>
+
+      <!-- Key Benefits List -->
+      <div class="auth-features-box bg-light rounded-3 p-3 mb-3 text-start border">
+        <div class="d-flex align-items-center gap-2 mb-2 small text-dark">
+          <i class="bi bi-check-circle-fill text-success flex-shrink-0"></i>
+          <span>{{ 'auth.feature1' | translate }}</span>
+        </div>
+        <div class="d-flex align-items-center gap-2 mb-2 small text-dark">
+          <i class="bi bi-check-circle-fill text-success flex-shrink-0"></i>
+          <span>{{ 'auth.feature2' | translate }}</span>
+        </div>
+        <div class="d-flex align-items-center gap-2 small text-dark">
+          <i class="bi bi-check-circle-fill text-success flex-shrink-0"></i>
+          <span>{{ 'auth.feature3' | translate }}</span>
+        </div>
+      </div>
+
+      <!-- Auth Error Notification (if any) -->
+      <div *ngIf="authError" class="alert alert-danger py-2 px-3 small rounded-3 mb-3 text-start d-flex align-items-center gap-2">
+        <i class="bi bi-exclamation-triangle-fill text-danger fs-5 flex-shrink-0"></i>
+        <div class="flex-grow-1">{{ authError }}</div>
+      </div>
+
+      <!-- THE SINGLE CENTRAL GOOGLE SIGN IN BUTTON -->
+      <button
+        (click)="loginWithGoogle()"
+        [disabled]="isSigningIn"
+        class="btn btn-google-auth w-100 py-3 rounded-pill shadow-sm d-flex align-items-center justify-content-center gap-3 mb-2 fw-bold font-display fs-6"
+      >
+        <svg *ngIf="!isSigningIn" width="22" height="22" viewBox="0 0 24 24" class="flex-shrink-0">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+        </svg>
+        <span *ngIf="isSigningIn" class="spinner-border spinner-border-sm text-primary" role="status"></span>
+        <span class="text-dark">{{ isSigningIn ? ('auth.loggingIn' | translate) : ('auth.loginWithGoogle' | translate) }}</span>
+      </button>
+
+      <div class="small text-muted mb-3" style="font-size: 0.78rem;">
+        {{ 'auth.secureLogin' | translate }}
+      </div>
+
+      <!-- Language Selector Inside Dialog -->
+      <div class="d-flex justify-content-center align-items-center gap-2 pt-3 border-top">
+        <span class="text-muted small" style="font-size: 0.8rem;">{{ 'auth.selectLang' | translate }}:</span>
+        <button
+          (click)="setLanguage('bn')"
+          class="btn btn-sm py-1 px-3 rounded-pill"
+          [ngClass]="currentLang === 'bn' ? 'btn-primary' : 'btn-outline-secondary'"
+          style="font-size: 0.78rem;"
+        >
+          বাংলা
+        </button>
+        <button
+          (click)="setLanguage('en')"
+          class="btn btn-sm py-1 px-3 rounded-pill"
+          [ngClass]="currentLang === 'en' ? 'btn-primary' : 'btn-outline-secondary'"
+          style="font-size: 0.78rem;"
+        >
+          English
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 3. Main App Content (ONLY RENDERED AFTER GOOGLE LOGIN SUCCEEDS) -->
+<div *ngIf="currentUser" class="app-shell">
+  <app-navbar></app-navbar>
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>
+
+

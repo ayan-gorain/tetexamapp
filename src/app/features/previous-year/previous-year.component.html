@@ -1,0 +1,301 @@
+<div class="app-container">
+  <!-- Back to Dashboard / Header Navigation -->
+  <div class="mb-3 d-flex align-items-center justify-content-between">
+    <a routerLink="/dashboard" class="btn btn-sm btn-light border rounded-pill px-3 py-1.5 fw-bold text-dark d-inline-flex align-items-center gap-1 shadow-xs">
+      <i class="bi bi-arrow-left"></i>
+      <span>{{ 'result.dashboard' | translate }}</span>
+    </a>
+  </div>
+
+  <!-- Section Header with Notice -->
+  <div class="tet-card p-3 p-sm-4 mb-4 shadow-sm bg-white border">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <span class="badge bg-warning text-dark fw-bold px-2.5 py-1 rounded-pill">
+            <i class="bi bi-patch-check-fill me-1"></i> {{ 'pyq.realBadge' | translate }}
+          </span>
+          <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1">
+            <i class="bi bi-stars me-1"></i> {{ 'pyq.datasetBadge' | translate }}
+          </span>
+        </div>
+        <h3 class="fw-bold font-display text-dark mb-1 fs-4">{{ 'pyq.title' | translate }}</h3>
+        <p class="text-muted small mb-0 bengali-text" style="line-height: 1.5;">
+          {{ 'pyq.subtitle' | translate }}
+        </p>
+      </div>
+
+      <div class="d-flex flex-wrap gap-2 w-100 w-sm-auto">
+        <button
+          (click)="startPyqMockTest()"
+          [disabled]="isLoadingAi || questions.length === 0"
+          class="btn btn-warning text-dark fw-bold rounded-pill px-3 py-2 flex-grow-1 flex-sm-grow-0 shadow-sm"
+        >
+          <i class="bi bi-play-circle-fill me-1"></i> {{ 'pyq.aiMockBtn' | translate }}
+        </button>
+        <button
+          (click)="startPyqPracticeTest()"
+          [disabled]="isLoadingAi || questions.length === 0"
+          class="btn btn-outline-primary rounded-pill px-3 py-2 flex-grow-1 flex-sm-grow-0"
+        >
+          <i class="bi bi-pencil-square me-1"></i> {{ 'pyq.aiPracticeBtn' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Notification Banner if Gemini API fails -->
+  <div *ngIf="apiErrorMessage" class="alert alert-danger alert-dismissible fade show d-flex align-items-start gap-3 rounded-4 shadow-sm mb-4 border-danger animate__animated animate__shakeX" role="alert">
+    <i class="bi bi-exclamation-octagon-fill fs-4 text-danger flex-shrink-0 mt-1"></i>
+    <div class="flex-grow-1">
+      <span class="fw-bold text-dark d-block mb-1">Gemini AI Notification</span>
+      <div class="small p-2 bg-danger-subtle rounded border border-danger-subtle text-break font-monospace">
+        {{ apiErrorMessage }}
+      </div>
+      <div class="mt-2">
+        <button (click)="fetchWithGemini()" [disabled]="isLoadingAi" class="btn btn-sm btn-danger rounded-pill px-3 fw-bold me-2">
+          <i class="bi bi-arrow-clockwise me-1"></i> Retry with Gemini AI
+        </button>
+        <button (click)="loadOfflineFallback()" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+          Load Built-in Archive
+        </button>
+      </div>
+    </div>
+    <button type="button" class="btn-close" (click)="apiErrorMessage = ''" aria-label="Close"></button>
+  </div>
+
+  <!-- Year & Subject Selection Hub -->
+  <div class="tet-card p-3 p-sm-4 mb-4 bg-white border shadow-sm">
+    
+    <!-- 1. Select TET Exam Year -->
+    <label class="form-label small text-muted fw-bold text-uppercase mb-2 d-flex align-items-center gap-1">
+      <i class="bi bi-calendar3 text-primary"></i> {{ 'pyq.selectYearHeading' | translate }}
+    </label>
+    
+    <div class="d-flex flex-wrap gap-2 mb-3">
+      <button
+        *ngFor="let y of allYears"
+        type="button"
+        class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold transition-all"
+        [ngClass]="selectedYear === y ? 'btn-primary shadow-sm' : 'btn-outline-secondary'"
+        (click)="selectYear(y)"
+      >
+        <i class="bi bi-journal-check me-1"></i> {{ y }} TET
+      </button>
+    </div>
+
+    <!-- 2. Select Subject Scope -->
+    <label class="form-label small text-muted fw-bold text-uppercase mb-2 d-flex align-items-center gap-1">
+      <i class="bi bi-grid-fill text-primary"></i> {{ 'pyq.selectSubjectHeading' | translate }}
+    </label>
+
+    <div class="d-flex flex-wrap gap-2 mb-3">
+      <!-- All 5 Subjects Option -->
+      <button
+        type="button"
+        class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold"
+        [ngClass]="selectedSubject === 'all' ? 'btn-success shadow-sm text-white' : 'btn-outline-secondary'"
+        (click)="selectSubject('all')"
+      >
+        <i class="bi bi-stars me-1"></i> {{ 'pyq.all5Subjects' | translate }}
+      </button>
+
+      <!-- Individual 5 Subjects -->
+      <button
+        *ngFor="let s of subjects"
+        type="button"
+        class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold"
+        [ngClass]="selectedSubject === s.id ? 'btn-primary shadow-sm' : 'btn-outline-secondary'"
+        (click)="selectSubject(s.id)"
+      >
+        <i [class]="'bi ' + s.icon + ' me-1'"></i> {{ currentLang === 'en' ? s.nameEn : s.nameBn }}
+      </button>
+    </div>
+
+    <!-- 3. Question Count & Primary AI Generation Trigger -->
+    <div class="p-3 bg-light rounded-4 border d-flex flex-column flex-sm-row justify-content-between align-items-stretch align-items-sm-center gap-3">
+      <div class="d-flex align-items-center gap-2">
+        <span class="small fw-bold text-muted text-nowrap">{{ 'dashboard.questionCount' | translate }}:</span>
+        <div class="btn-group btn-group-sm" role="group">
+          <button
+            type="button"
+            class="btn px-2.5 fw-bold"
+            [ngClass]="selectedCount === 5 ? 'btn-primary' : 'btn-outline-secondary'"
+            (click)="selectedCount = 5; applyFilters()"
+          >
+            5
+          </button>
+          <button
+            type="button"
+            class="btn px-2.5 fw-bold"
+            [ngClass]="selectedCount === 10 ? 'btn-primary' : 'btn-outline-secondary'"
+            (click)="selectedCount = 10; applyFilters()"
+          >
+            10
+          </button>
+          <button
+            type="button"
+            class="btn px-2.5 fw-bold"
+            [ngClass]="selectedCount === 15 ? 'btn-primary' : 'btn-outline-secondary'"
+            (click)="selectedCount = 15; applyFilters()"
+          >
+            15
+          </button>
+          <button
+            type="button"
+            class="btn px-2.5 fw-bold"
+            [ngClass]="selectedCount === 20 ? 'btn-primary' : 'btn-outline-secondary'"
+            (click)="selectedCount = 20; applyFilters()"
+          >
+            20
+          </button>
+        </div>
+      </div>
+
+      <button
+        (click)="fetchWithGemini()"
+        [disabled]="isLoadingAi"
+        class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2"
+      >
+        <span *ngIf="isLoadingAi" class="spinner-border spinner-border-sm" role="status"></span>
+        <i *ngIf="!isLoadingAi" class="bi bi-lightning-charge-fill text-warning"></i>
+        <span>{{ isLoadingAi ? ('create.generating' | translate) : ('pyq.aiFetchBtn' | translate) }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Result Counter Bar -->
+  <div class="d-flex justify-content-between align-items-center mb-3 px-1">
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge bg-primary rounded-pill px-2.5 py-1 fw-bold">
+        {{ selectedYear }} TET
+      </span>
+      <span class="small text-muted fw-semibold">
+        {{ questions.length }} {{ 'create.questionsUnit' | translate }}
+      </span>
+      <span *ngIf="isAiGenerated" class="badge bg-success-subtle text-success border border-success-subtle rounded-pill small">
+        <i class="bi bi-stars me-1"></i> {{ 'pyq.aiGeneratedBadge' | translate }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Loading State Skeleton -->
+  <div *ngIf="isLoadingAi" class="tet-card p-5 text-center mb-4 border bg-white shadow-sm">
+    <div class="spinner-border text-primary mb-3" style="width: 3.5rem; height: 3.5rem;" role="status"></div>
+    <h5 class="fw-bold font-display mb-1">{{ 'create.generating' | translate }}</h5>
+    <p class="text-muted small mb-0 bengali-text">{{ 'pyq.loadingAi' | translate }}</p>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!isLoadingAi && questions.length === 0" class="tet-card p-5 text-center mb-4 border bg-white shadow-sm text-muted">
+    <i class="bi bi-journal-x fs-1 opacity-50 d-block mb-2"></i>
+    <h6 class="fw-bold text-dark mb-1">কোনো প্রশ্ন পাওয়া যায়নি</h6>
+    <p class="small mb-3">Gemini AI বোতামে ক্লিক করে এই সালের প্রশ্ন প্রস্তুত করুন।</p>
+    <button (click)="fetchWithGemini()" class="btn btn-sm btn-primary rounded-pill px-4">
+      <i class="bi bi-lightning-charge-fill text-warning me-1"></i> {{ 'pyq.aiFetchBtn' | translate }}
+    </button>
+  </div>
+
+  <!-- PYQ Questions List -->
+  <div *ngIf="!isLoadingAi">
+    <div *ngFor="let q of questions; let i = index" class="tet-card p-3 p-sm-4 mb-4 border shadow-sm bg-white">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-primary text-white font-display px-2.5 py-1">
+            #{{ i + 1 }}
+          </span>
+          <span class="badge bg-warning-subtle text-dark border border-warning">
+            <i class="bi bi-calendar-event me-1"></i> {{ selectedYear }} TET
+          </span>
+          <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle">
+            {{ getSubjectDisplayName(q.subject) }}
+          </span>
+        </div>
+        <span class="badge bg-light text-muted border">
+          {{ q.difficulty || 'Medium' }}
+        </span>
+      </div>
+
+      <!-- Question Text -->
+      <h4 class="fs-5 fw-bold text-dark mb-3 bengali-text" style="line-height: 1.5;">
+        {{ q.question }}
+      </h4>
+
+      <!-- Options Container -->
+      <div class="options-container mb-3">
+        <div
+          *ngFor="let opt of q.options; let optIdx = index"
+          class="option-card"
+          [class.correct-answer]="revealedMap[q.id] && optIdx === q.correctAnswer"
+        >
+          <div class="option-badge">
+            {{ getOptionLetter(optIdx) }}
+          </div>
+          <div class="option-text bengali-text">
+            {{ opt }}
+          </div>
+          <div *ngIf="revealedMap[q.id] && optIdx === q.correctAnswer" class="text-success fw-bold small ms-2">
+            <i class="bi bi-check-circle-fill fs-5"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Revealed Explanation Box -->
+      <div *ngIf="revealedMap[q.id]" class="p-3 bg-success-subtle border border-success rounded-3 mb-3 animate__animated animate__fadeIn">
+        <div class="d-flex align-items-center gap-2 text-success fw-bold small mb-1">
+          <i class="bi bi-check2-circle fs-5"></i> {{ 'result.correct' | translate }}: {{ getOptionLetter(q.correctAnswer) }} ({{ q.options[q.correctAnswer] }})
+        </div>
+        <div class="bengali-text text-dark small" style="line-height: 1.6;">
+          {{ q.explanation }}
+        </div>
+      </div>
+
+      <!-- AI Deep Pedagogical Breakdown (if generated) -->
+      <div *ngIf="aiExplanationMap[q.id]" class="p-3 bg-primary-subtle border border-primary-subtle rounded-3 mb-3 animate__animated animate__fadeIn">
+        <div class="d-flex align-items-center gap-2 text-primary fw-bold small mb-1">
+          <i class="bi bi-lightbulb-fill text-warning fs-5"></i> {{ 'review.aiExplanationTitle' | translate }}
+        </div>
+        <div class="bengali-text text-dark small" style="line-height: 1.6; white-space: pre-wrap;">
+          {{ aiExplanationMap[q.id] }}
+        </div>
+      </div>
+
+      <!-- Action Buttons Bar -->
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 pt-2 border-top">
+        <button
+          (click)="toggleReveal(q.id)"
+          class="btn btn-sm rounded-pill px-3"
+          [ngClass]="revealedMap[q.id] ? 'btn-outline-secondary' : 'btn-outline-success'"
+        >
+          <i [class]="revealedMap[q.id] ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+          <span class="ms-1">{{ revealedMap[q.id] ? ('pyq.hideAnswer' | translate) : ('pyq.revealAnswer' | translate) }}</span>
+        </button>
+
+        <div class="d-flex flex-wrap gap-1.5">
+          <button
+            *ngIf="!aiExplanationMap[q.id]"
+            (click)="explainWithAi(q)"
+            [disabled]="isExplainingMap[q.id]"
+            class="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-1"
+            style="font-size: 0.78rem;"
+          >
+            <span *ngIf="isExplainingMap[q.id]" class="spinner-border spinner-border-sm me-1" role="status"></span>
+            <i *ngIf="!isExplainingMap[q.id]" class="bi bi-lightbulb text-warning me-1"></i>
+            <span>{{ isExplainingMap[q.id] ? ('review.generatingExp' | translate) : ('review.explainWithAi' | translate) }}</span>
+          </button>
+
+          <button
+            (click)="generateSimilarWithAi(q)"
+            [disabled]="isGeneratingSimilarMap[q.id]"
+            class="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-2.5 py-1 shadow-xs"
+            style="font-size: 0.78rem;"
+          >
+            <span *ngIf="isGeneratingSimilarMap[q.id]" class="spinner-border spinner-border-sm me-1" role="status"></span>
+            <i *ngIf="!isGeneratingSimilarMap[q.id]" class="bi bi-lightning-charge-fill text-dark me-1"></i>
+            <span>{{ isGeneratingSimilarMap[q.id] ? ('review.generatingSimilarQuiz' | translate) : ('review.similarQuizBtn' | translate) }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

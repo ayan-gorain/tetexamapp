@@ -1,0 +1,467 @@
+/* ==========================================================================
+   TET Master - Ultra-Modern EdTech Design System
+   Optimized for High Legibility, Comfortable Bengali Reading & Mobile Touch
+   ========================================================================== */
+
+:root {
+  /* Premium Primary Colors */
+  --primary-color: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-light: #eff6ff;
+  --primary-gradient: linear-gradient(135deg, #1e40af 0%, #2563eb 55%, #0284c7 100%);
+  --primary-glow: rgba(37, 99, 235, 0.22);
+  
+  --secondary-color: #0d9488;
+  --secondary-light: #f0fdfa;
+  
+  --success-color: #10b981;
+  --success-hover: #059669;
+  --success-light: #ecfdf5;
+  --danger-color: #ef4444;
+  --danger-light: #fef2f2;
+  --warning-color: #f59e0b;
+  --warning-light: #fffbeb;
+  --info-color: #06b6d4;
+  --info-light: #ecfeff;
+
+  --bg-main: #f8fafc;
+  --card-bg: #ffffff;
+  --text-main: #0f172a;
+  --text-body: #1e293b;
+  --text-muted: #64748b;
+  --border-color: #e2e8f0;
+  --border-subtle: #f1f5f9;
+  
+  /* High-legibility Bengali & Modern English Typography */
+  --font-bengali: 'Hind Siliguri', 'Noto Sans Bengali', system-ui, -apple-system, sans-serif;
+  --font-display: 'Outfit', 'Hind Siliguri', system-ui, sans-serif;
+  --font-body: 'Hind Siliguri', 'Inter', system-ui, sans-serif;
+  
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-pill: 9999px;
+  
+  --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-sm: 0 4px 8px -2px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.03);
+  --shadow-md: 0 10px 24px -4px rgba(15, 23, 42, 0.08), 0 4px 8px -2px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 20px 32px -8px rgba(15, 23, 42, 0.12), 0 8px 16px -4px rgba(15, 23, 42, 0.06);
+  --shadow-glow: 0 10px 25px -3px var(--primary-glow);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  font-family: var(--font-body);
+  font-size: 16px;
+  background-color: var(--bg-main);
+  color: var(--text-body);
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.65;
+  touch-action: pan-y;
+  overscroll-behavior-x: none;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6, .font-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.25px;
+}
+
+/* High Legibility Bengali Text */
+.bengali-text {
+  font-family: var(--font-bengali);
+  line-height: 1.75;
+  font-weight: 500;
+  font-size: 1.05rem;
+  color: var(--text-main);
+}
+
+/* App Header & Brand */
+.brand-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.25rem;
+  background: linear-gradient(135deg, #1e40af, #2563eb, #0284c7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.5px;
+}
+
+/* Mobile-First Layout Container - Strictly fit screen with zero horizontal scroll */
+.app-container {
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 16px 14px 48px 14px;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .app-container {
+    padding: 24px 20px 48px 20px;
+  }
+}
+
+/* Modern Card Styling */
+.tet-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.tet-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.tet-card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: #ffffff;
+}
+
+.tet-card-body {
+  padding: 18px 20px;
+}
+
+/* Gradient Hero Banner */
+.hero-banner {
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #0284c7 100%);
+  color: white;
+  border-radius: var(--radius-xl);
+  padding: 26px 22px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+
+.hero-banner::after {
+  content: '';
+  position: absolute;
+  top: -40%;
+  right: -15%;
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Stat Box */
+.stat-box {
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  padding: 16px 12px;
+  text-align: center;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-xs);
+  transition: all 0.2s ease;
+}
+
+.stat-box:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-value {
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+/* Mobile-Friendly Question Option Cards */
+.options-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.option-card {
+  display: flex;
+  align-items: center;
+  min-height: 58px;
+  padding: 14px 18px;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--border-color);
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  position: relative;
+  box-shadow: var(--shadow-xs);
+}
+
+.option-card:hover {
+  border-color: #93c5fd;
+  background-color: #f8fafc;
+  transform: translateY(-1px);
+}
+
+.option-card:active {
+  transform: scale(0.99);
+}
+
+.option-card.selected {
+  border-color: var(--primary-color) !important;
+  background-color: #eff6ff !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+.option-badge {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.05rem;
+  font-family: var(--font-bengali);
+  background-color: #f1f5f9;
+  color: #334155;
+  margin-right: 14px;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  border: 1px solid #e2e8f0;
+}
+
+.option-card.selected .option-badge {
+  background-color: var(--primary-color);
+  color: #ffffff;
+  border-color: var(--primary-color);
+}
+
+.option-text {
+  font-size: 1.08rem;
+  color: var(--text-main);
+  flex-grow: 1;
+  line-height: 1.6;
+}
+
+/* Option Review States */
+.option-card.correct-answer {
+  border-color: var(--success-color) !important;
+  background-color: var(--success-light) !important;
+}
+
+.option-card.correct-answer .option-badge {
+  background-color: var(--success-color) !important;
+  color: white !important;
+  border-color: var(--success-color) !important;
+}
+
+.option-card.wrong-answer {
+  border-color: var(--danger-color) !important;
+  background-color: var(--danger-light) !important;
+}
+
+.option-card.wrong-answer .option-badge {
+  background-color: var(--danger-color) !important;
+  color: white !important;
+  border-color: var(--danger-color) !important;
+}
+
+/* Quiz Timer Pill */
+.timer-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f8fafc;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+}
+
+.timer-pill.warning {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fca5a5;
+  animation: pulse-timer 1s infinite alternate;
+}
+
+@keyframes pulse-timer {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.04); }
+}
+
+/* Progress Bar */
+.custom-progress {
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background-color: #e2e8f0;
+  overflow: hidden;
+}
+
+.custom-progress-bar {
+  background: linear-gradient(90deg, #2563eb, #06b6d4);
+  transition: width 0.3s ease;
+}
+
+/* Question Palette Buttons */
+.palette-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border: 1px solid var(--border-color);
+  background: #ffffff;
+  color: var(--text-main);
+  transition: all 0.15s ease;
+}
+
+.palette-btn.current {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px var(--primary-color);
+  font-weight: 800;
+}
+
+.palette-btn.answered {
+  background-color: #10b981;
+  color: #ffffff;
+  border-color: #10b981;
+}
+
+.palette-btn.flagged {
+  background-color: #f59e0b;
+  color: #ffffff;
+  border-color: #f59e0b;
+}
+
+/* Custom Large Mobile Buttons */
+.btn-primary-custom {
+  background: var(--primary-gradient);
+  border: none;
+  color: #ffffff;
+  font-weight: 700;
+  font-family: var(--font-display);
+  padding: 12px 24px;
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-glow);
+  transition: all 0.2s ease;
+  min-height: 48px;
+}
+
+.btn-primary-custom:hover, .btn-primary-custom:focus {
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4);
+  transform: translateY(-1px);
+  color: #ffffff;
+}
+
+.btn-primary-custom:active {
+  transform: scale(0.98);
+}
+
+.btn-primary-custom:disabled {
+  background: #94a3b8;
+  box-shadow: none;
+  transform: none;
+  cursor: not-allowed;
+}
+
+/* Badges */
+.badge-subject {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 0.82rem;
+}
+
+.badge-pyq {
+  background-color: #fef3c7;
+  color: #b45309;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 0.82rem;
+}
+
+/* Subject & Exam Pattern Card Utilities */
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.transition-all {
+  transition: all 0.2s ease;
+}
+
+/* Hide scrollbar for clean swipeable pill lists */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Mobile-Specific Responsive Tweaks */
+@media (max-width: 576px) {
+  .app-container {
+    padding: 12px 12px 64px 12px;
+  }
+  .stat-box {
+    padding: 12px 8px;
+    border-radius: 14px;
+  }
+  .stat-value {
+    font-size: 1.45rem;
+  }
+  .stat-label {
+    font-size: 0.76rem;
+  }
+  .hero-banner {
+    padding: 20px 16px;
+    border-radius: var(--radius-lg);
+  }
+  .tet-card {
+    border-radius: var(--radius-md);
+  }
+  .bengali-text {
+    font-size: 1rem;
+    line-height: 1.65;
+  }
+  .option-text {
+    font-size: 1rem;
+  }
+  .option-card {
+    min-height: 54px;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+  }
+}
+

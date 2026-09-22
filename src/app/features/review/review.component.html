@@ -1,0 +1,176 @@
+<div class="app-container" *ngIf="attempt; else noAttempt">
+  <!-- Top Navigation & Header -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div>
+      <a routerLink="/results" class="text-decoration-none text-muted small d-inline-flex align-items-center mb-1">
+        <i class="bi bi-arrow-left me-1"></i> {{ 'review.backToResult' | translate }}
+      </a>
+      <h3 class="fw-bold font-display text-dark mb-0">{{ 'review.title' | translate }}</h3>
+    </div>
+    <div class="d-flex gap-2">
+      <span class="badge bg-success-subtle text-success fs-6 px-3 py-2 rounded-pill">
+        <i class="bi bi-check2"></i> {{ attempt.score }} / {{ attempt.totalQuestions }} {{ 'review.correct' | translate }}
+      </span>
+      <a routerLink="/dashboard" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-2">
+        <i class="bi bi-house me-1"></i> {{ 'result.dashboard' | translate }}
+      </a>
+    </div>
+  </div>
+
+  <!-- Filter Tabs (All, Correct, Incorrect, Skipped) - Swipeable on Mobile -->
+  <div class="d-flex flex-nowrap overflow-x-auto gap-2 pb-2 mb-4 scrollbar-none">
+    <button
+      class="btn btn-sm rounded-pill px-3 text-nowrap flex-shrink-0"
+      [ngClass]="activeFilter === 'all' ? 'btn-dark' : 'btn-outline-secondary'"
+      (click)="activeFilter = 'all'"
+    >
+      {{ 'review.all' | translate }} ({{ attempt.questions.length }})
+    </button>
+    <button
+      class="btn btn-sm rounded-pill px-3 text-nowrap flex-shrink-0"
+      [ngClass]="activeFilter === 'correct' ? 'btn-success' : 'btn-outline-success'"
+      (click)="activeFilter = 'correct'"
+    >
+      <i class="bi bi-check-circle me-1"></i> {{ 'review.correct' | translate }} ({{ attempt.correctAnswers }})
+    </button>
+    <button
+      class="btn btn-sm rounded-pill px-3 text-nowrap flex-shrink-0"
+      [ngClass]="activeFilter === 'incorrect' ? 'btn-danger' : 'btn-outline-danger'"
+      (click)="activeFilter = 'incorrect'"
+    >
+      <i class="bi bi-x-circle me-1"></i> {{ 'review.incorrect' | translate }} ({{ attempt.incorrectAnswers }})
+    </button>
+    <button
+      class="btn btn-sm rounded-pill px-3 text-nowrap flex-shrink-0"
+      [ngClass]="activeFilter === 'skipped' ? 'btn-secondary' : 'btn-outline-secondary'"
+      (click)="activeFilter = 'skipped'"
+    >
+      <i class="bi bi-dash-circle me-1"></i> {{ 'review.skipped' | translate }} ({{ attempt.skippedAnswers }})
+    </button>
+  </div>
+
+  <!-- Questions Review Cards List -->
+  <div *ngFor="let q of filteredQuestions; let i = index" class="tet-card p-4 mb-4 border shadow-sm">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-light text-dark border font-display">
+          {{ 'quiz.question' | translate }} {{ q.id }}
+        </span>
+        <span class="badge badge-subject">
+          {{ getSubjectDisplayName(q.subject) }}
+        </span>
+      </div>
+
+      <!-- Answer Status Badge -->
+      <div>
+        <span *ngIf="isUserCorrect(q)" class="badge bg-success text-white px-3 py-1 rounded-pill">
+          <i class="bi bi-check-lg me-1"></i> {{ 'review.correctMark' | translate }}
+        </span>
+        <span *ngIf="isUserIncorrect(q)" class="badge bg-danger text-white px-3 py-1 rounded-pill">
+          <i class="bi bi-x-lg me-1"></i> {{ 'review.wrongMark' | translate }}
+        </span>
+        <span *ngIf="isUserSkipped(q)" class="badge bg-secondary text-white px-3 py-1 rounded-pill">
+          <i class="bi bi-dash me-1"></i> {{ 'review.notAttempted' | translate }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Question Text -->
+    <h4 class="fs-5 fw-bold text-dark mb-4 bengali-text">
+      {{ q.question }}
+    </h4>
+
+    <!-- Options Review -->
+    <div class="options-container mb-3">
+      <div
+        *ngFor="let opt of q.options; let optIdx = index"
+        class="option-card"
+        [class.correct-answer]="optIdx === q.correctAnswer"
+        [class.wrong-answer]="userAnswerMap[q.id] === optIdx && optIdx !== q.correctAnswer"
+      >
+        <div class="option-badge">
+          {{ getOptionLetter(optIdx) }}
+        </div>
+        <div class="option-text bengali-text">
+          {{ opt }}
+        </div>
+        <div class="ms-2">
+          <span *ngIf="optIdx === q.correctAnswer" class="text-success fw-bold small">
+            <i class="bi bi-check-circle-fill fs-5"></i>
+          </span>
+          <span *ngIf="userAnswerMap[q.id] === optIdx && optIdx !== q.correctAnswer" class="text-danger fw-bold small">
+            <i class="bi bi-x-circle-fill fs-5"></i>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Standard Explanation Box -->
+    <div class="p-3 bg-light rounded-3 border mb-3">
+      <div class="fw-bold small text-muted text-uppercase mb-1">
+        <i class="bi bi-info-circle-fill text-primary me-1"></i> {{ 'review.explanation' | translate }}
+      </div>
+      <div class="bengali-text text-dark small">
+        {{ q.explanation }}
+      </div>
+    </div>
+
+    <!-- AI Pedagogical Deep-Dive Explanation Container (if generated) -->
+    <div *ngIf="aiExplaining[q.id]" class="p-3 bg-primary-subtle text-primary-emphasis rounded-3 border border-primary mb-3 animate__animated animate__fadeIn">
+      <div class="d-flex align-items-center gap-2 mb-2 fw-bold small">
+        <i class="bi bi-stars text-primary fs-5"></i> {{ 'review.aiExplanationTitle' | translate }}
+      </div>
+      <div *ngIf="aiExplanationLoading[q.id]" class="text-muted small py-2">
+        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+        {{ 'review.generatingExp' | translate }}
+      </div>
+      <div *ngIf="aiExplanationError[q.id]" class="alert alert-danger p-2 small mb-0 font-monospace">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i> {{ aiExplanationError[q.id] }}
+      </div>
+      <div *ngIf="aiExplanations[q.id]" class="bengali-text small">
+        {{ aiExplanations[q.id] }}
+      </div>
+    </div>
+
+    <!-- AI Similar Question Error Banner (if error) -->
+    <div *ngIf="similarError[q.id]" class="alert alert-danger p-2 small mb-3 font-monospace">
+      <i class="bi bi-exclamation-triangle-fill me-1"></i> {{ similarError[q.id] }}
+    </div>
+
+    <!-- AI Action Buttons -->
+    <div class="d-flex flex-wrap gap-2 pt-2 border-top">
+      <button
+        (click)="requestAiExplanation(q)"
+        [disabled]="aiExplanationLoading[q.id]"
+        class="btn btn-sm btn-outline-primary rounded-pill px-3 d-inline-flex align-items-center gap-1"
+      >
+        <i class="bi bi-lightbulb"></i>
+        <span>{{ 'review.explainWithAi' | translate }}</span>
+      </button>
+
+      <button
+        (click)="generateSimilarQuiz(q)"
+        [disabled]="similarLoading[q.id]"
+        class="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-3 d-inline-flex align-items-center gap-1 shadow-xs"
+      >
+        <span *ngIf="similarLoading[q.id]" class="spinner-border spinner-border-sm me-1" role="status"></span>
+        <i *ngIf="!similarLoading[q.id]" class="bi bi-lightning-charge-fill text-dark"></i>
+        <span>{{ similarLoading[q.id] ? ('review.generatingSimilarQuiz' | translate) : ('review.similarQuizBtn' | translate) }}</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Empty State -->
+<ng-template #noAttempt>
+  <div class="app-container text-center py-5">
+    <div class="tet-card p-5">
+      <i class="bi bi-search display-1 text-muted mb-3"></i>
+      <h4 class="fw-bold font-display mb-2">No Review Details Found</h4>
+      <p class="text-muted mb-4">Please complete a quiz to view answer reviews.</p>
+      <a routerLink="/dashboard" class="btn btn-primary rounded-pill px-4">
+        {{ 'result.dashboard' | translate }}
+      </a>
+    </div>
+  </div>
+</ng-template>

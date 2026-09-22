@@ -1,0 +1,95 @@
+.hero-badge {
+  background-color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+.hero-badge-text {
+  color: #1e40af !important;
+  font-weight: 700 !important;
+  font-size: 0.82rem;
+  letter-spacing: -0.1px;
+}
+.cursor-pointer {
+  cursor: pointer;
+}
+.transition-all {
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.stat-icon-wrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+.real-pattern-card {
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+.real-pattern-card:hover {
+  background: #f8fafc;
+  border-color: #93c5fd;
+  transform: translateY(-1px);
+}
+.real-pattern-card.active-pattern {
+  background: #eff6ff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+}
+.pattern-sparkle-box {
+  width: 46px;
+  height: 46px;
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #06b6d4 100%);
+}
+.subject-tile-card {
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  min-height: 108px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+.subject-tile-card:hover {
+  background: #f8fafc;
+  border-color: #93c5fd;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
+}
+.subject-tile-card:active {
+  transform: scale(0.98);
+}
+.subject-tile-card.active-subject {
+  background: #eff6ff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+}
+.subject-tile-icon {
+  width: 38px;
+  height: 38px;
+  font-size: 1.15rem;
+}
+.control-btn-group .btn {
+  min-height: 42px;
+  font-size: 0.88rem;
+}
+.launch-test-btn {
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #0284c7 100%);
+  color: #ffffff;
+  min-height: 68px;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
+}
+.launch-test-btn:hover {
+  background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #0369a1 100%);
+  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.42) !important;
+  transform: translateY(-2px);
+}
+.launch-test-btn:active {
+  transform: scale(0.98);
+}
+.launch-test-btn:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none !important;
+}

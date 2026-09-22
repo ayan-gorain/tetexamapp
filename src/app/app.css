@@ -1,0 +1,109 @@
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-main, #f8fafc);
+}
+
+.main-content {
+  flex: 1 0 auto;
+  width: 100%;
+}
+
+/* Full Screen Initial Auth Loading Screen */
+.auth-loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+  z-index: 9999999;
+}
+
+.auth-loading-card {
+  max-width: 380px;
+  width: 90%;
+}
+
+/* Full-Screen Secure Auth Gate Screen */
+.auth-page-wrapper {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0b1329 0%, #1e293b 50%, #0f172a 100%);
+  position: relative;
+  overflow: hidden;
+  z-index: 999999;
+}
+
+/* Decorative Background Glow Blobs */
+.auth-bg-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+.auth-blob-1 {
+  width: 320px;
+  height: 320px;
+  background: #2563eb;
+  top: -60px;
+  left: -60px;
+}
+
+.auth-blob-2 {
+  width: 360px;
+  height: 360px;
+  background: #06b6d4;
+  bottom: -80px;
+  right: -80px;
+}
+
+.auth-card-container {
+  max-width: 480px;
+}
+
+.auth-dialog-card {
+  background: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
+}
+
+.brand-icon-box-lg {
+  width: 68px;
+  height: 68px;
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #06b6d4 100%);
+}
+
+.auth-features-box {
+  background-color: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.btn-google-auth {
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  color: #1e293b;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 52px;
+}
+
+.btn-google-auth:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+}
+
+.btn-google-auth:active {
+  transform: scale(0.98);
+}
+
+.btn-google-auth:disabled {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  cursor: not-allowed;
+  transform: none;
+}
+

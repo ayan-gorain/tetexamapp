@@ -1,0 +1,133 @@
+<!-- Top Navbar -->
+<nav class="navbar navbar-expand bg-white border-bottom sticky-top py-2 px-2 px-sm-3 shadow-sm">
+  <div class="container-fluid max-w-900 px-0 d-flex align-items-center justify-content-between">
+    <!-- Brand Logo & Title -->
+    <a class="navbar-brand d-flex align-items-center gap-2 text-decoration-none m-0" routerLink="/dashboard">
+      <div class="brand-icon-box bg-primary text-white rounded-3 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0">
+        <i class="bi bi-mortarboard-fill fs-5"></i>
+      </div>
+      <div>
+        <div class="brand-title lh-1 fs-5">{{ 'app.title' | translate }}</div>
+        <div class="brand-subtitle text-muted lh-1 d-none d-md-block">{{ 'app.subtitle' | translate }}</div>
+      </div>
+    </a>
+
+    <!-- Right Side Controls: Language, Streak, Profile & Logout -->
+    <div class="d-flex align-items-center gap-1.5 gap-sm-2 ms-auto">
+      <!-- Language Toggle Pill -->
+      <div class="lang-switcher-pill d-flex align-items-center bg-light p-1 rounded-pill border flex-shrink-0">
+        <button
+          type="button"
+          class="lang-btn btn btn-sm rounded-pill border-0"
+          [class.active]="currentLang === 'bn'"
+          (click)="setLanguage('bn')"
+          title="বাংলায় দেখুন"
+        >
+          বাংলা
+        </button>
+        <button
+          type="button"
+          class="lang-btn btn btn-sm rounded-pill border-0"
+          [class.active]="currentLang === 'en'"
+          (click)="setLanguage('en')"
+          title="View in English"
+        >
+          EN
+        </button>
+      </div>
+
+      <!-- Streak Indicator -->
+      <div *ngIf="currentUser" class="streak-pill d-flex align-items-center gap-1 bg-amber-50 px-2 py-1 rounded-pill border border-warning flex-shrink-0" title="Daily Streak">
+        <span class="fs-6">🔥</span>
+        <span class="fw-bold text-dark small">{{ currentStreak }}</span>
+      </div>
+
+      <!-- User Profile & Sign Out Area -->
+      <div *ngIf="currentUser" class="d-flex align-items-center gap-1.5 gap-sm-2 position-relative flex-shrink-0">
+        <!-- Interactive Avatar Button (Opens Profile Menu) -->
+        <button
+          type="button"
+          (click)="toggleProfileMenu()"
+          class="btn p-0 border-0 d-flex align-items-center gap-1 rounded-circle focus-ring focus-ring-primary"
+          title="User Profile Menu"
+          aria-label="User Profile"
+        >
+          <img
+            *ngIf="currentUser.photoURL"
+            [src]="currentUser.photoURL"
+            [alt]="currentUser.displayName || 'User'"
+            class="rounded-circle border border-2 border-primary flex-shrink-0"
+            style="width: 34px; height: 34px; object-fit: cover;"
+            referrerpolicy="no-referrer"
+          />
+          <div
+            *ngIf="!currentUser.photoURL"
+            class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold shadow-xs"
+            style="width: 34px; height: 34px; font-size: 0.88rem;"
+          >
+            {{ (currentUser.displayName || 'U').charAt(0).toUpperCase() }}
+          </div>
+        </button>
+
+        <!-- Direct Logout Action Button (Always visible on all screens) -->
+        <button
+          (click)="logout()"
+          class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1 d-flex align-items-center gap-1 fw-bold shadow-xs flex-shrink-0"
+          title="লগআউট (Logout)"
+          style="min-height: 32px; font-size: 0.8rem;"
+        >
+          <i class="bi bi-box-arrow-right fs-6"></i>
+          <span class="d-none d-sm-inline">{{ 'auth.logout' | translate }}</span>
+        </button>
+
+        <!-- Floating Profile / Logout Dropdown Menu -->
+        <div *ngIf="showProfileMenu" class="profile-dropdown-backdrop" (click)="closeProfileMenu()"></div>
+        <div *ngIf="showProfileMenu" class="profile-dropdown-menu shadow-lg border rounded-4 p-3 bg-white animate__animated animate__fadeIn position-absolute end-0 top-100 mt-2 z-3" style="width: 260px;">
+          <!-- User Info Header -->
+          <div class="d-flex align-items-center gap-2.5 pb-2.5 mb-2.5 border-bottom">
+            <img
+              *ngIf="currentUser.photoURL"
+              [src]="currentUser.photoURL"
+              [alt]="currentUser.displayName || 'User'"
+              class="rounded-circle border border-primary flex-shrink-0"
+              style="width: 42px; height: 42px; object-fit: cover;"
+              referrerpolicy="no-referrer"
+            />
+            <div
+              *ngIf="!currentUser.photoURL"
+              class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold flex-shrink-0"
+              style="width: 42px; height: 42px; font-size: 1.1rem;"
+            >
+              {{ (currentUser.displayName || 'U').charAt(0).toUpperCase() }}
+            </div>
+            <div class="overflow-hidden">
+              <div class="fw-bold text-dark text-truncate small" style="font-size: 0.92rem;">
+                {{ currentUser.displayName || 'User' }}
+              </div>
+              <div class="text-muted text-truncate" style="font-size: 0.75rem;">
+                {{ currentUser.email }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Streak Info Badge -->
+          <div class="d-flex align-items-center justify-content-between p-2 bg-light rounded-3 mb-2.5 border">
+            <span class="small text-muted">{{ 'nav.streak' | translate }}:</span>
+            <span class="fw-bold text-dark small">🔥 {{ currentStreak }} দিন</span>
+          </div>
+
+          <!-- Prominent Full Width Logout Button -->
+          <button
+            (click)="logout()"
+            class="btn btn-danger w-100 rounded-pill py-2 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-sm"
+            style="font-size: 0.88rem;"
+          >
+            <i class="bi bi-box-arrow-right fs-6"></i>
+            <span>{{ 'auth.logout' | translate }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
