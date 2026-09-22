@@ -100,5 +100,7 @@ export const environment = {
 fs.writeFileSync(path.join(envDir, 'environment.ts'), prodEnvContent, 'utf8');
 fs.writeFileSync(path.join(envDir, 'environment.development.ts'), devEnvContent, 'utf8');
 
-console.log('Environment configuration files generated successfully from .env / process.env');
+console.log('✅ Environment configuration files generated successfully!');
+console.log(`- Firebase Configured: ${Boolean(firebaseApiKey && firebaseProjectId)} (Project: ${firebaseProjectId || 'none'})`);
+console.log(`- Gemini Configured: ${Boolean(geminiApiKey)} (Model: ${geminiModel})`);
 
