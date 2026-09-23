@@ -1,64 +1,72 @@
-<div class="app-container pb-5 mb-5" *ngIf="questions.length > 0; else noActiveQuiz">
-  <!-- Quiz Top Bar (Timer, Counter, Status) -->
+<div class="app-container" *ngIf="questions.length > 0; else noActiveQuiz">
+  <!-- Quiz Top Bar (Always-Visible Timer, Counter, Subject, Progress) -->
   <div class="tet-card p-3 mb-3 bg-white border shadow-sm">
 
-    <div class="d-flex justify-content-between align-items-center mb-2">
+    <!-- Row 1: Question Indicator & Prominent Timer Pill -->
+    <div class="d-flex justify-content-between align-items-center gap-2 mb-2.5">
       <!-- Question Counter -->
       <div class="d-flex align-items-center gap-2">
-        <span class="fs-6 fw-bold text-dark font-display">
+        <span class="badge bg-primary text-white rounded-pill px-3 py-1.5 font-display fs-6 shadow-xs">
           {{ 'quiz.question' | translate }} {{ currentIndex + 1 }} / {{ questions.length }}
         </span>
-        <span class="badge badge-subject">
-          {{ getSubjectDisplayName(currentQuestion.subject || '') }}
-        </span>
-        <span class="badge bg-light text-muted border d-none d-sm-inline">
-          {{ currentQuestion.difficulty }}
-        </span>
       </div>
 
-      <!-- Timer for Mock Test -->
-      <div *ngIf="config?.mode === 'mock'" class="d-flex align-items-center">
-        <div class="timer-pill" [class.warning]="timeRemaining <= 120">
-          <i class="bi bi-stopwatch-fill"></i>
+      <!-- High-Visibility Timer (Visible in BOTH Mock Countdown and Practice Stopwatch modes) -->
+      <div class="flex-shrink-0">
+        <!-- Mock Countdown Timer -->
+        <div *ngIf="config?.mode === 'mock'" class="timer-pill" [class.warning]="timeRemaining <= 120" title="বাকি সময় (Remaining Time)">
+          <i class="bi bi-hourglass-split" [ngClass]="timeRemaining <= 120 ? 'text-danger animate__animated animate__pulse animate__infinite' : 'text-primary'"></i>
           <span>{{ formatTimeRemaining(timeRemaining) }}</span>
         </div>
-      </div>
 
-      <!-- Practice Mode Badge -->
-      <div *ngIf="config?.mode === 'practice'" class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">
-        <i class="bi bi-shield-check me-1"></i> {{ 'create.practiceModeTitle' | translate }}
+        <!-- Practice Mode Elapsed Stopwatch Timer -->
+        <div *ngIf="config?.mode !== 'mock'" class="timer-pill practice" title="অতিক্রান্ত সময় (Elapsed Time)">
+          <i class="bi bi-stopwatch text-success"></i>
+          <span>{{ formatTimeRemaining(timeElapsed) }}</span>
+        </div>
       </div>
     </div>
 
-    <!-- Progress Bar -->
+    <!-- Row 2: Subject Badge & Flag for Review Button -->
+    <div class="d-flex justify-content-between align-items-center gap-2 mb-2.5">
+      <div class="d-flex align-items-center gap-1.5 overflow-hidden">
+        <span class="badge badge-subject text-truncate">
+          {{ getSubjectDisplayName(currentQuestion.subject || '') }}
+        </span>
+        <span *ngIf="config?.mode === 'mock'" class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill small d-none d-sm-inline">
+          {{ 'dashboard.mockTestBadge' | translate }}
+        </span>
+        <span *ngIf="config?.mode !== 'mock'" class="badge bg-success-subtle text-success border border-success-subtle rounded-pill small d-none d-sm-inline">
+          {{ 'dashboard.practiceBadge' | translate }}
+        </span>
+      </div>
+
+      <!-- Mark for Review Flag Button -->
+      <button
+        (click)="toggleFlag()"
+        class="btn btn-sm rounded-pill px-3 py-1 d-flex align-items-center gap-1.5 flex-shrink-0 transition-all"
+        [ngClass]="isFlagged(currentQuestion.id) ? 'btn-warning text-dark fw-bold shadow-xs' : 'btn-outline-secondary bg-white'"
+        style="min-height: 34px; font-size: 0.84rem;"
+      >
+        <i [class]="isFlagged(currentQuestion.id) ? 'bi bi-flag-fill text-dark' : 'bi bi-flag'"></i>
+        <span>{{ isFlagged(currentQuestion.id) ? ('quiz.flagged' | translate) : ('quiz.flag' | translate) }}</span>
+      </button>
+    </div>
+
+    <!-- Visual Progress Bar -->
     <div class="custom-progress">
       <div class="custom-progress-bar" [style.width.%]="progressPercentage"></div>
     </div>
   </div>
 
-  <!-- Question Card -->
-  <div class="tet-card p-4 mb-3">
-    <div class="d-flex justify-content-between align-items-start mb-3">
-      <span class="badge bg-primary text-white rounded-pill px-3 py-1 font-display">
-        Q{{ currentIndex + 1 }}
-      </span>
-
-      <button
-        (click)="toggleFlag()"
-        class="btn btn-sm rounded-pill px-3 d-flex align-items-center gap-1"
-        [ngClass]="isFlagged(currentQuestion.id) ? 'btn-warning text-dark' : 'btn-outline-secondary'"
-      >
-        <i [class]="isFlagged(currentQuestion.id) ? 'bi bi-flag-fill' : 'bi bi-flag'"></i>
-        <span>{{ isFlagged(currentQuestion.id) ? ('quiz.flagged' | translate) : ('quiz.flag' | translate) }}</span>
-      </button>
-    </div>
-
+  <!-- Question Card with Senior-Friendly Large Typography -->
+  <div class="tet-card p-3.5 p-sm-4 mb-3.5 bg-white border shadow-sm">
     <!-- Question Text -->
-    <h3 class="fs-5 fw-bold text-dark mb-4 bengali-text lh-base">
+    <h3 class="fs-5 fw-bold text-dark mb-4 bengali-text" style="line-height: 1.8; font-size: 1.22rem;">
       {{ currentQuestion.question }}
     </h3>
 
-    <!-- Option Cards -->
+    <!-- Large, Senior-Accessible Option Cards -->
     <div class="options-container">
       <div
         *ngFor="let option of currentQuestion.options; let i = index"
@@ -72,18 +80,18 @@
         <div class="option-text bengali-text">
           {{ option }}
         </div>
-        <div *ngIf="userAnswers[currentQuestion.id] === i" class="text-primary fs-5 ms-2">
+        <div *ngIf="userAnswers[currentQuestion.id] === i" class="text-primary fs-4 ms-2 flex-shrink-0">
           <i class="bi bi-check-circle-fill"></i>
         </div>
       </div>
     </div>
 
     <!-- Practice Mode Instant Concept Drill & AI Topic Study Box -->
-    <div *ngIf="config?.mode === 'practice' && isCurrentAnswered()" class="mt-4 p-3.5 rounded-3 border animate__animated animate__fadeIn" [ngClass]="isCurrentWrong() ? 'bg-amber-50 border-warning' : 'bg-success-subtle border-success'">
+    <div *ngIf="config?.mode !== 'mock' && isCurrentAnswered()" class="mt-4 p-3.5 rounded-3 border animate__animated animate__fadeIn" [ngClass]="isCurrentWrong() ? 'bg-warning-subtle border-warning' : 'bg-success-subtle border-success'">
       
       <!-- Status Header -->
       <div class="d-flex align-items-center justify-content-between gap-2 mb-2.5">
-        <div class="d-flex align-items-center gap-1.5 fw-bold" [ngClass]="isCurrentWrong() ? 'text-danger' : 'text-success'">
+        <div class="d-flex align-items-center gap-1.5 fw-bold fs-6" [ngClass]="isCurrentWrong() ? 'text-danger' : 'text-success'">
           <i [class]="isCurrentWrong() ? 'bi bi-x-circle-fill fs-5' : 'bi bi-check-circle-fill fs-5'"></i>
           <span>{{ isCurrentWrong() ? ('review.wrongMark' | translate) : ('review.correctMark' | translate) }}</span>
         </div>
@@ -93,56 +101,55 @@
       </div>
 
       <!-- Quick Explanation Snippet if available -->
-      <div *ngIf="currentQuestion.explanation" class="p-2.5 bg-white rounded-2 border mb-3 small bengali-text text-dark" style="font-size: 0.88rem;">
+      <div *ngIf="currentQuestion.explanation" class="p-3 bg-white rounded-3 border mb-3 small bengali-text text-dark" style="font-size: 0.95rem; line-height: 1.7;">
         <strong class="text-primary"><i class="bi bi-info-circle-fill me-1"></i>ব্যাখ্যা:</strong> {{ currentQuestion.explanation }}
       </div>
 
       <!-- Similar Questions Error if any -->
-      <div *ngIf="similarError" class="alert alert-danger p-2 small mb-2.5 font-monospace">
+      <div *ngIf="similarError" class="alert alert-danger p-2.5 small mb-2.5 font-monospace">
         <i class="bi bi-exclamation-triangle-fill me-1"></i> {{ similarError }}
       </div>
 
       <!-- The 2 Stacked Action Buttons -->
-      <div class="d-flex flex-column gap-2">
+      <div class="d-flex flex-column gap-2.5">
         <!-- Button 1: 10 Practice Questions on this topic -->
         <button
           (click)="generate10SimilarQuestions()"
           [disabled]="isGeneratingSimilar"
           class="btn btn-warning text-dark fw-bold rounded-pill px-4 py-2.5 d-flex align-items-center justify-content-center gap-2 shadow-xs w-100"
-          style="min-height: 44px; font-size: 0.92rem;"
+          style="min-height: 48px; font-size: 0.95rem;"
         >
           <span *ngIf="isGeneratingSimilar" class="spinner-border spinner-border-sm" role="status"></span>
-          <i *ngIf="!isGeneratingSimilar" class="bi bi-lightning-charge-fill text-dark fs-6"></i>
+          <i *ngIf="!isGeneratingSimilar" class="bi bi-lightning-charge-fill text-dark fs-5"></i>
           <span>{{ isGeneratingSimilar ? ('notes.generatingQuiz' | translate) : ('review.similarQuizBtn' | translate) }}</span>
         </button>
 
-        <!-- Button 2 (Directly Below Button 1): Learn this Topic (AI Study Notes) -->
+        <!-- Button 2: Learn this Topic (AI Study Notes) -->
         <button
           (click)="openTopicStudyModal()"
           class="btn btn-primary text-white fw-bold rounded-pill px-4 py-2.5 d-flex align-items-center justify-content-center gap-2 shadow-sm w-100"
-          style="min-height: 44px; font-size: 0.92rem;"
+          style="min-height: 48px; font-size: 0.95rem;"
         >
-          <i class="bi bi-mortarboard-fill fs-6"></i>
+          <i class="bi bi-mortarboard-fill fs-5"></i>
           <span>{{ 'review.learnTopicBtn' | translate }}</span>
         </button>
       </div>
     </div>
   </div>
 
-
   <!-- Question Palette Accordion / Quick Jump -->
-  <div class="tet-card p-3 mb-4">
-    <div class="d-flex justify-content-between align-items-center cursor-pointer mb-2" (click)="showPalette = !showPalette">
-      <span class="fw-bold small text-muted text-uppercase">
-        <i class="bi bi-grid-3x3-gap-fill me-1"></i> {{ 'quiz.navigator' | translate }}
+  <div class="tet-card p-3 mb-4 bg-white border shadow-sm">
+    <div class="d-flex justify-content-between align-items-center cursor-pointer" (click)="showPalette = !showPalette">
+      <span class="fw-bold small text-muted text-uppercase d-flex align-items-center gap-1.5">
+        <i class="bi bi-grid-3x3-gap-fill text-primary"></i> {{ 'quiz.navigator' | translate }}
       </span>
-      <span class="small text-primary">
+      <span class="small text-primary fw-bold">
         {{ showPalette ? ('quiz.hide' | translate) : ('quiz.show' | translate) }}
-        <i [class]="showPalette ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"></i>
+        <i [class]="showPalette ? 'bi bi-chevron-up ms-1' : 'bi bi-chevron-down ms-1'"></i>
       </span>
     </div>
 
-    <div *ngIf="showPalette" class="pt-2 border-top animate__animated animate__fadeIn">
+    <div *ngIf="showPalette" class="pt-3 mt-2 border-top animate__animated animate__fadeIn">
       <div class="d-flex flex-wrap gap-2 mb-3">
         <button
           *ngFor="let q of questions; let idx = index"
@@ -157,26 +164,26 @@
       </div>
 
       <div class="d-flex flex-wrap gap-3 small text-muted">
-        <div class="d-flex align-items-center gap-1">
-          <span class="badge bg-success p-1"></span> {{ 'quiz.answered' | translate }} ({{ answeredCount }})
+        <div class="d-flex align-items-center gap-1.5">
+          <span class="badge bg-success p-1 rounded-circle" style="width: 10px; height: 10px;"></span> {{ 'quiz.answered' | translate }} ({{ answeredCount }})
         </div>
-        <div class="d-flex align-items-center gap-1">
-          <span class="badge bg-warning p-1"></span> {{ 'quiz.flagged' | translate }} ({{ flaggedCount }})
+        <div class="d-flex align-items-center gap-1.5">
+          <span class="badge bg-warning p-1 rounded-circle" style="width: 10px; height: 10px;"></span> {{ 'quiz.flagged' | translate }} ({{ flaggedCount }})
         </div>
-        <div class="d-flex align-items-center gap-1">
-          <span class="badge bg-light border p-1"></span> {{ 'quiz.unanswered' | translate }} ({{ questions.length - answeredCount }})
+        <div class="d-flex align-items-center gap-1.5">
+          <span class="badge bg-light border p-1 rounded-circle" style="width: 10px; height: 10px;"></span> {{ 'quiz.unanswered' | translate }} ({{ questions.length - answeredCount }})
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Mobile-Friendly Sticky Quiz Navigation Bar -->
-  <div class="quiz-bottom-nav p-3 bg-white border-top shadow-lg d-flex justify-content-between align-items-center gap-2">
+  <!-- Mobile-Friendly Sticky Quiz Navigation Bar (Senior-Accessible Large Touch Targets) -->
+  <div class="quiz-bottom-nav p-2.5 p-sm-3 bg-white border-top shadow-lg d-flex justify-content-between align-items-center gap-2">
     <button
       (click)="previousQuestion()"
       [disabled]="currentIndex === 0"
-      class="btn btn-outline-secondary rounded-pill px-3 py-2 flex-grow-1 d-flex align-items-center justify-content-center"
-      style="min-height: 48px; font-size: 0.95rem;"
+      class="btn btn-outline-secondary rounded-pill px-2.5 px-sm-3 py-2.5 flex-grow-1 d-flex align-items-center justify-content-center fw-bold"
+      style="min-height: 50px; font-size: 0.98rem;"
     >
       <i class="bi bi-arrow-left me-1"></i> {{ 'quiz.previous' | translate }}
     </button>
@@ -184,17 +191,17 @@
     <button
       *ngIf="currentIndex < questions.length - 1"
       (click)="nextQuestion()"
-      class="btn btn-primary rounded-pill px-3 py-2 shadow-sm flex-grow-1 fw-bold d-flex align-items-center justify-content-center"
-      style="min-height: 48px; font-size: 0.95rem;"
+      class="btn btn-primary rounded-pill px-2.5 px-sm-3 py-2.5 shadow-sm flex-grow-1 fw-bold d-flex align-items-center justify-content-center"
+      style="min-height: 50px; font-size: 0.98rem;"
     >
       {{ 'quiz.next' | translate }} <i class="bi bi-arrow-right ms-1"></i>
     </button>
 
     <button
       (click)="confirmSubmitModal = true"
-      class="btn rounded-pill px-3 py-2 shadow-sm fw-bold d-flex align-items-center justify-content-center"
+      class="btn rounded-pill px-2.5 px-sm-3 py-2.5 shadow-sm fw-bold d-flex align-items-center justify-content-center"
       [ngClass]="currentIndex === questions.length - 1 ? 'btn-success flex-grow-1' : 'btn-outline-success'"
-      style="min-height: 48px; font-size: 0.95rem;"
+      style="min-height: 50px; font-size: 0.98rem;"
     >
       <i class="bi bi-check2-circle me-1"></i> {{ 'quiz.submit' | translate }}
     </button>

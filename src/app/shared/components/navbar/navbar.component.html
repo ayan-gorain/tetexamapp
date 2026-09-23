@@ -1,21 +1,21 @@
 <!-- Top Navbar -->
 <nav class="navbar navbar-expand bg-white border-bottom sticky-top py-2 px-2 px-sm-3 shadow-sm">
-  <div class="container-fluid max-w-900 px-0 d-flex align-items-center justify-content-between">
+  <div class="container-fluid max-w-900 px-0 d-flex align-items-center justify-content-between flex-nowrap">
     <!-- Brand Logo & Title -->
-    <a class="navbar-brand d-flex align-items-center gap-2 text-decoration-none m-0" routerLink="/dashboard">
-      <div class="brand-icon-box bg-primary text-white rounded-3 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0">
+    <a class="navbar-brand d-flex align-items-center gap-2 text-decoration-none m-0 flex-shrink-0" routerLink="/dashboard">
+      <div class="brand-icon-box bg-primary text-white rounded-3 d-flex align-items-center justify-content-center shadow-xs flex-shrink-0">
         <i class="bi bi-mortarboard-fill fs-5"></i>
       </div>
       <div>
         <div class="brand-title lh-1 fs-5">{{ 'app.title' | translate }}</div>
-        <div class="brand-subtitle text-muted lh-1 d-none d-md-block">{{ 'app.subtitle' | translate }}</div>
+        <div class="brand-subtitle text-muted lh-1 d-none d-md-block mt-0.5">{{ 'app.subtitle' | translate }}</div>
       </div>
     </a>
 
-    <!-- Right Side Controls: Language, Streak, Profile & Logout -->
-    <div class="d-flex align-items-center gap-1.5 gap-sm-2 ms-auto">
+    <!-- Right Side Controls: Language, Vault, Streak, Profile & Logout -->
+    <div class="d-flex align-items-center gap-1 gap-sm-2 ms-auto flex-shrink-0">
       <!-- Language Toggle Pill -->
-      <div class="lang-switcher-pill d-flex align-items-center bg-light p-1 rounded-pill border flex-shrink-0">
+      <div class="lang-switcher-pill d-flex align-items-center bg-light p-0.5 rounded-pill border flex-shrink-0">
         <button
           type="button"
           class="lang-btn btn btn-sm rounded-pill border-0"
@@ -41,32 +41,31 @@
         routerLink="/saved-notes"
         routerLinkActive="btn-primary text-white"
         [routerLinkActiveOptions]="{exact: false}"
-        class="btn btn-sm btn-light border rounded-pill px-2.5 py-1 d-flex align-items-center gap-1.5 fw-semibold flex-shrink-0"
-        title="স্টাডি ভল্ট ও সংরক্ষিত নোট (Saved Notes)"
-        style="min-height: 32px; font-size: 0.82rem;"
+        class="btn btn-sm btn-light border rounded-pill px-2 px-sm-2.5 py-1 d-flex align-items-center gap-1 fw-semibold flex-shrink-0"
+        title="স্টাডি নোটস (Study Vault)"
+        style="min-height: 34px; font-size: 0.82rem;"
       >
         <i class="bi bi-journal-bookmark-fill text-primary"></i>
         <span class="d-none d-md-inline">{{ 'nav.savedNotes' | translate }}</span>
-        <span *ngIf="savedNotesCount > 0" class="badge bg-primary text-white rounded-pill px-1.5 py-0.5" style="font-size: 0.7rem;">
+        <span *ngIf="savedNotesCount > 0" class="badge bg-primary text-white rounded-pill px-1.5 py-0.5" style="font-size: 0.72rem;">
           {{ savedNotesCount }}
         </span>
       </a>
 
-      <!-- Streak Indicator -->
-      <div *ngIf="currentUser" class="streak-pill d-flex align-items-center gap-1 bg-amber-50 px-2 py-1 rounded-pill border border-warning flex-shrink-0" title="Daily Streak">
+      <!-- Streak Indicator (Hidden on extra small screens to save room) -->
+      <div *ngIf="currentUser" class="streak-pill d-none d-sm-flex align-items-center gap-1 bg-amber-50 px-2 py-1 rounded-pill border border-warning flex-shrink-0" title="Daily Streak">
         <span class="fs-6">🔥</span>
         <span class="fw-bold text-dark small">{{ currentStreak }}</span>
       </div>
 
-
       <!-- User Profile & Sign Out Area -->
-      <div *ngIf="currentUser" class="d-flex align-items-center gap-1.5 gap-sm-2 position-relative flex-shrink-0">
+      <div *ngIf="currentUser" class="d-flex align-items-center gap-1 gap-sm-1.5 position-relative flex-shrink-0">
         <!-- Interactive Avatar Button (Opens Profile Menu) -->
         <button
           type="button"
           (click)="toggleProfileMenu()"
-          class="btn p-0 border-0 d-flex align-items-center gap-1 rounded-circle focus-ring focus-ring-primary"
-          title="User Profile Menu"
+          class="btn p-0 border-0 d-flex align-items-center rounded-circle focus-ring focus-ring-primary"
+          title="User Profile"
           aria-label="User Profile"
         >
           <img
@@ -80,18 +79,18 @@
           <div
             *ngIf="!currentUser.photoURL"
             class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold shadow-xs"
-            style="width: 34px; height: 34px; font-size: 0.88rem;"
+            style="width: 34px; height: 34px; font-size: 0.9rem;"
           >
             {{ (currentUser.displayName || 'U').charAt(0).toUpperCase() }}
           </div>
         </button>
 
-        <!-- Direct Logout Action Button (Always visible on all screens) -->
+        <!-- Direct Logout Action Button -->
         <button
           (click)="logout()"
-          class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1 d-flex align-items-center gap-1 fw-bold shadow-xs flex-shrink-0"
+          class="btn btn-sm btn-outline-danger rounded-pill px-2 px-sm-2.5 py-1 d-flex align-items-center gap-1 fw-bold shadow-xs flex-shrink-0"
           title="লগআউট (Logout)"
-          style="min-height: 32px; font-size: 0.8rem;"
+          style="min-height: 34px; font-size: 0.8rem;"
         >
           <i class="bi bi-box-arrow-right fs-6"></i>
           <span class="d-none d-sm-inline">{{ 'auth.logout' | translate }}</span>
@@ -136,8 +135,8 @@
           <!-- Prominent Full Width Logout Button -->
           <button
             (click)="logout()"
-            class="btn btn-danger w-100 rounded-pill py-2 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-sm"
-            style="font-size: 0.88rem;"
+            class="btn btn-danger w-100 rounded-pill py-2.5 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-sm"
+            style="font-size: 0.9rem;"
           >
             <i class="bi bi-box-arrow-right fs-6"></i>
             <span>{{ 'auth.logout' | translate }}</span>

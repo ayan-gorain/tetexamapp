@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ChangeDetectionStrategy, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { QuizQuestion, TopicNote, TET_SUBJECTS } from '../../models/quiz.model';
 import { GeminiService } from '../../../services/gemini.service';
@@ -33,12 +33,15 @@ export class TopicStudyModalComponent implements OnChanges {
     private geminiService: GeminiService,
     private storageService: StorageService,
     private langService: LanguageService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
   ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['isOpen'] && this.isOpen) {
-      this.handleModalOpen();
+    if (this.isOpen) {
+      if (changes['isOpen']?.currentValue === true || changes['question'] || changes['initialNote']) {
+        this.handleModalOpen();
+      }
     }
   }
 
@@ -51,7 +54,7 @@ export class TopicStudyModalComponent implements OnChanges {
       this.note = this.initialNote;
       this.isSaved = this.storageService.isTopicSaved(this.note.id, this.note.subject);
       this.isLoading = false;
-      this.cdr.markForCheck();
+      this.cdr.detectChanges();
       return;
     }
 
@@ -65,21 +68,25 @@ export class TopicStudyModalComponent implements OnChanges {
     this.errorMessage = '';
     this.note = null;
     this.isSaved = false;
-    this.cdr.markForCheck();
+    this.cdr.detectChanges();
 
     const lang = this.langService.currentLanguage === 'en' ? 'English' : 'Bengali';
 
     this.geminiService.generateTopicStudyNotes(q, lang).subscribe({
       next: (generatedNote) => {
-        this.note = generatedNote;
-        this.isSaved = this.storageService.isTopicSaved(generatedNote.id, generatedNote.subject);
-        this.isLoading = false;
-        this.cdr.markForCheck();
+        this.ngZone.run(() => {
+          this.note = generatedNote;
+          this.isSaved = this.storageService.isTopicSaved(generatedNote.id, generatedNote.subject);
+          this.isLoading = false;
+          this.cdr.detectChanges();
+        });
       },
       error: (err: Error) => {
-        this.errorMessage = err.message || 'Gemini API was unable to generate topic notes. Please retry.';
-        this.isLoading = false;
-        this.cdr.markForCheck();
+        this.ngZone.run(() => {
+          this.errorMessage = err.message || 'Gemini API was unable to generate topic notes. Please retry.';
+          this.isLoading = false;
+          this.cdr.detectChanges();
+        });
       }
     });
   }
@@ -147,5 +154,11 @@ TET Master Study Vault
     const found = TET_SUBJECTS.find(s => s.id.toLowerCase() === subId.toLowerCase());
     if (!found) return subId;
     return this.langService.currentLanguage === 'en' ? found.nameEn : found.nameBn;
+  }
+
+  public getSubjectIcon(subId?: string): string {
+    if (!subId) return 'bi bi-book-half';
+    const found = TET_SUBJECTS.find(s => s.id.toLowerCase() === subId.toLowerCase());
+    return found ? `bi ${found.icon}` : 'bi bi-book-half';
   }
 }

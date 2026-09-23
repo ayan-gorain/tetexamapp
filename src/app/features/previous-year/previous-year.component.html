@@ -246,12 +246,12 @@
       </div>
 
       <!-- Question Text -->
-      <h4 class="fs-5 fw-bold text-dark mb-3 bengali-text" style="line-height: 1.5;">
+      <h4 class="fs-5 fw-bold text-dark mb-3.5 bengali-text font-display" style="line-height: 1.75; font-size: 1.18rem;">
         {{ q.question }}
       </h4>
 
       <!-- Options Container -->
-      <div class="options-container mb-3">
+      <div class="options-container mb-3.5">
         <div
           *ngFor="let opt of q.options; let optIdx = index"
           class="option-card"
@@ -263,50 +263,51 @@
           <div class="option-text bengali-text">
             {{ opt }}
           </div>
-          <div *ngIf="revealedMap[q.id] && optIdx === q.correctAnswer" class="text-success fw-bold small ms-2">
-            <i class="bi bi-check-circle-fill fs-5"></i>
+          <div *ngIf="revealedMap[q.id] && optIdx === q.correctAnswer" class="text-success fw-bold ms-2 flex-shrink-0">
+            <i class="bi bi-check-circle-fill fs-4"></i>
           </div>
         </div>
       </div>
 
       <!-- Revealed Explanation Box -->
-      <div *ngIf="revealedMap[q.id]" class="p-3 bg-success-subtle border border-success rounded-3 mb-3 animate__animated animate__fadeIn">
-        <div class="d-flex align-items-center gap-2 text-success fw-bold small mb-1">
+      <div *ngIf="revealedMap[q.id]" class="p-3.5 bg-success-subtle border border-success rounded-3 mb-3.5 animate__animated animate__fadeIn">
+        <div class="d-flex align-items-center gap-2 text-success fw-bold mb-1.5" style="font-size: 0.95rem;">
           <i class="bi bi-check2-circle fs-5"></i> {{ 'result.correct' | translate }}: {{ getOptionLetter(q.correctAnswer) }} ({{ q.options[q.correctAnswer] }})
         </div>
-        <div class="bengali-text text-dark small" style="line-height: 1.6;">
+        <div class="bengali-text text-dark" style="line-height: 1.75; font-size: 1rem;">
           {{ q.explanation }}
         </div>
       </div>
 
       <!-- AI Deep Pedagogical Breakdown (if generated) -->
-      <div *ngIf="aiExplanationMap[q.id]" class="p-3 bg-primary-subtle border border-primary-subtle rounded-3 mb-3 animate__animated animate__fadeIn">
-        <div class="d-flex align-items-center gap-2 text-primary fw-bold small mb-1">
+      <div *ngIf="aiExplanationMap[q.id]" class="p-3.5 bg-primary-subtle border border-primary-subtle rounded-3 mb-3.5 animate__animated animate__fadeIn">
+        <div class="d-flex align-items-center gap-2 text-primary fw-bold mb-1.5" style="font-size: 0.95rem;">
           <i class="bi bi-lightbulb-fill text-warning fs-5"></i> {{ 'review.aiExplanationTitle' | translate }}
         </div>
-        <div class="bengali-text text-dark small" style="line-height: 1.6; white-space: pre-wrap;">
+        <div class="bengali-text text-dark" style="line-height: 1.75; font-size: 1rem; white-space: pre-wrap;">
           {{ aiExplanationMap[q.id] }}
         </div>
       </div>
 
       <!-- Action Buttons Bar -->
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 pt-2 border-top">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 pt-2.5 border-top">
         <button
           (click)="toggleReveal(q.id)"
-          class="btn btn-sm rounded-pill px-3"
-          [ngClass]="revealedMap[q.id] ? 'btn-outline-secondary' : 'btn-outline-success'"
+          class="btn btn-sm rounded-pill px-3.5 py-1.5 fw-bold"
+          [ngClass]="revealedMap[q.id] ? 'btn-outline-secondary bg-white' : 'btn-outline-success bg-white'"
+          style="min-height: 38px; font-size: 0.88rem;"
         >
           <i [class]="revealedMap[q.id] ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
-          <span class="ms-1">{{ revealedMap[q.id] ? ('pyq.hideAnswer' | translate) : ('pyq.revealAnswer' | translate) }}</span>
+          <span class="ms-1.5">{{ revealedMap[q.id] ? ('pyq.hideAnswer' | translate) : ('pyq.revealAnswer' | translate) }}</span>
         </button>
 
-        <div class="d-flex flex-wrap gap-1.5">
+        <div class="d-flex flex-wrap gap-2">
           <button
             *ngIf="!aiExplanationMap[q.id]"
             (click)="explainWithAi(q)"
             [disabled]="isExplainingMap[q.id]"
-            class="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-1"
-            style="font-size: 0.78rem;"
+            class="btn btn-sm btn-outline-primary bg-white rounded-pill px-3 py-1.5 fw-semibold shadow-xs"
+            style="min-height: 38px; font-size: 0.86rem;"
           >
             <span *ngIf="isExplainingMap[q.id]" class="spinner-border spinner-border-sm me-1" role="status"></span>
             <i *ngIf="!isExplainingMap[q.id]" class="bi bi-lightbulb text-warning me-1"></i>
@@ -316,8 +317,8 @@
           <button
             (click)="generateSimilarWithAi(q)"
             [disabled]="isGeneratingSimilarMap[q.id]"
-            class="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-2.5 py-1 shadow-xs"
-            style="font-size: 0.78rem;"
+            class="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-3 py-1.5 shadow-xs"
+            style="min-height: 38px; font-size: 0.86rem;"
           >
             <span *ngIf="isGeneratingSimilarMap[q.id]" class="spinner-border spinner-border-sm me-1" role="status"></span>
             <i *ngIf="!isGeneratingSimilarMap[q.id]" class="bi bi-lightning-charge-fill text-dark me-1"></i>

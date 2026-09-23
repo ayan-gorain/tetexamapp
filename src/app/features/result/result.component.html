@@ -14,11 +14,11 @@
     </p>
 
     <!-- Main Score Circle / Metric -->
-    <div class="score-circle-wrapper mx-auto mb-4 d-flex flex-column align-items-center justify-content-center">
-      <div class="score-number font-display" [ngClass]="attempt.accuracy >= 60 ? 'text-primary' : 'text-warning'">
+    <div class="score-circle-wrapper mx-auto mb-4 d-flex flex-column align-items-center justify-content-center" [class.needs-practice]="attempt.accuracy < 60">
+      <div class="score-number font-display" [ngClass]="attempt.accuracy >= 60 ? 'text-success' : 'text-warning'">
         {{ attempt.score }} <span class="text-muted fs-4">/ {{ attempt.totalQuestions }}</span>
       </div>
-      <div class="accuracy-pill badge bg-light text-dark border px-3 py-1 mt-1 font-display">
+      <div class="accuracy-pill badge bg-white text-dark border px-3 py-1 mt-1 font-display shadow-xs" style="font-size: 0.88rem;">
         {{ 'result.accuracy' | translate }}: {{ attempt.accuracy }}%
       </div>
     </div>

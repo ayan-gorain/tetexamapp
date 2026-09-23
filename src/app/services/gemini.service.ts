@@ -375,12 +375,11 @@ Requirements:
    * Candidate models ordered by reliability, speed, and availability
    */
   private readonly candidateModels: string[] = [
-    'gemini-3.1-flash-lite',
-    'gemini-3.6-flash',
-    'gemini-3.5-flash',
     'gemini-flash-lite-latest',
-    'gemini-3-flash-preview',
-    'gemma-4-26b-a4b-it',
+    'gemini-2.5-flash',
+    'gemini-2.0-flash',
+    'gemini-1.5-flash',
+    'gemini-3.1-flash-lite',
     'gemini-flash-latest'
   ];
 

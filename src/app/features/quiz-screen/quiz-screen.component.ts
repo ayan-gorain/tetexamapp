@@ -24,7 +24,8 @@ export class QuizScreenComponent implements OnInit, OnDestroy {
   public userAnswers: { [questionId: number]: number } = {};
   public flaggedQuestions: number[] = [];
   public timeRemaining: number = 0;
-  public showPalette: boolean = true;
+  public timeElapsed: number = 0;
+  public showPalette: boolean = false;
   public confirmSubmitModal: boolean = false;
 
   public isStudyModalOpen: boolean = false;
@@ -40,7 +41,6 @@ export class QuizScreenComponent implements OnInit, OnDestroy {
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
-
 
   ngOnInit(): void {
     this.subs.add(
@@ -76,6 +76,12 @@ export class QuizScreenComponent implements OnInit, OnDestroy {
     this.subs.add(
       this.quizService.timeRemaining$.subscribe(t => {
         this.timeRemaining = t;
+        this.cdr.markForCheck();
+      })
+    );
+    this.subs.add(
+      this.quizService.timeElapsed$.subscribe(e => {
+        this.timeElapsed = e;
         this.cdr.markForCheck();
       })
     );

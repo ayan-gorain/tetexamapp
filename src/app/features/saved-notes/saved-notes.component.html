@@ -122,23 +122,23 @@
       </div>
 
       <!-- Note Topic Title -->
-      <h4 class="fs-5 fw-bold text-dark mb-2 bengali-text font-display lh-sm cursor-pointer" (click)="openFullStudyModal(note)">
+      <h4 class="fs-5 fw-bold text-dark mb-2.5 bengali-text font-display lh-sm cursor-pointer" (click)="openFullStudyModal(note)" style="font-size: 1.18rem;">
         {{ note.topicTitle }}
       </h4>
 
       <!-- Source Question Preview (if present) -->
-      <div *ngIf="note.sourceQuestion" class="p-2 bg-light rounded-2 border mb-2.5 small text-muted bengali-text" style="font-size: 0.82rem;">
+      <div *ngIf="note.sourceQuestion" class="p-2.5 bg-light rounded-3 border mb-3 small text-muted bengali-text" style="font-size: 0.9rem; line-height: 1.6;">
         <span class="fw-bold text-dark"><i class="bi bi-patch-question-fill text-primary me-1"></i>{{ 'notes.sourceQ' | translate }}:</span> {{ note.sourceQuestion | slice:0:110 }}...
       </div>
 
       <!-- Core Concept -->
-      <p class="bengali-text text-dark small mb-3 lh-base" style="font-size: 0.92rem;">
+      <p class="bengali-text text-dark mb-3 lh-base" style="font-size: 1.05rem; line-height: 1.75;">
         {{ note.coreConcept }}
       </p>
 
       <!-- Memory Mnemonics Box (Always highlighted) -->
-      <div *ngIf="note.memoryMnemonics" class="mnemonic-banner p-2.5 rounded-3 mb-3 border border-warning bg-warning-subtle text-dark small bengali-text fw-medium">
-        <div class="d-flex align-items-center gap-1.5 fw-bold mb-1 text-amber-900" style="font-size: 0.82rem;">
+      <div *ngIf="note.memoryMnemonics" class="mnemonic-banner p-3 rounded-3 mb-3 border border-warning bg-warning-subtle text-dark bengali-text fw-medium" style="font-size: 0.98rem; line-height: 1.7;">
+        <div class="d-flex align-items-center gap-1.5 fw-bold mb-1 text-amber-900" style="font-size: 0.88rem;">
           <i class="bi bi-lightbulb-fill text-warning"></i>
           <span>{{ 'notes.memoryMnemonics' | translate }}:</span>
         </div>
@@ -162,8 +162,8 @@
         </div>
 
         <!-- Real Life Example -->
-        <div *ngIf="note.realLifeExample" class="p-2.5 rounded-2 bg-emerald-50 border border-emerald-200 mb-3 small bengali-text">
-          <div class="fw-bold text-emerald-900 mb-1 d-flex align-items-center gap-1" style="font-size: 0.82rem;">
+        <div *ngIf="note.realLifeExample" class="p-3 rounded-3 bg-emerald-50 border border-emerald-200 mb-3 bengali-text" style="font-size: 0.95rem; line-height: 1.7;">
+          <div class="fw-bold text-emerald-900 mb-1 d-flex align-items-center gap-1" style="font-size: 0.88rem;">
             <i class="bi bi-easel2-fill"></i>
             <span>{{ 'notes.realLifeExample' | translate }}:</span>
           </div>
@@ -171,21 +171,21 @@
         </div>
 
         <!-- Common TET Mistakes -->
-        <div *ngIf="note.commonMistakes && note.commonMistakes.length > 0" class="p-2.5 rounded-2 bg-rose-50 border border-rose-200 mb-3 small bengali-text">
-          <div class="fw-bold text-danger mb-1 d-flex align-items-center gap-1" style="font-size: 0.82rem;">
+        <div *ngIf="note.commonMistakes && note.commonMistakes.length > 0" class="p-3 rounded-3 bg-rose-50 border border-rose-200 mb-3 bengali-text" style="font-size: 0.95rem; line-height: 1.7;">
+          <div class="fw-bold text-danger mb-1 d-flex align-items-center gap-1" style="font-size: 0.88rem;">
             <i class="bi bi-exclamation-triangle-fill"></i>
             <span>{{ 'notes.commonMistakes' | translate }}:</span>
           </div>
           <ul class="ps-3 mb-0 text-dark">
-            <li *ngFor="let mistake of note.commonMistakes" class="mb-1">
+            <li *ngFor="let mistake of note.commonMistakes" class="mb-1.5">
               {{ mistake }}
             </li>
           </ul>
         </div>
 
         <!-- Exam Revision Takeaways -->
-        <div *ngIf="note.examTakeaways && note.examTakeaways.length > 0" class="p-2.5 rounded-2 bg-purple-50 border border-purple-200 small bengali-text">
-          <div class="fw-bold text-purple-900 mb-1 d-flex align-items-center gap-1" style="font-size: 0.82rem;">
+        <div *ngIf="note.examTakeaways && note.examTakeaways.length > 0" class="p-3 rounded-3 bg-purple-50 border border-purple-200 bengali-text" style="font-size: 0.95rem; line-height: 1.7;">
+          <div class="fw-bold text-purple-900 mb-1 d-flex align-items-center gap-1" style="font-size: 0.88rem;">
             <i class="bi bi-journal-bookmark-fill text-purple"></i>
             <span>{{ 'notes.examTakeaways' | translate }}:</span>
           </div>
@@ -202,8 +202,8 @@
         <!-- Expand / Collapse Toggle -->
         <button
           (click)="toggleExpand(note.id)"
-          class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1.5 d-flex align-items-center gap-1"
-          style="font-size: 0.82rem;"
+          class="btn btn-sm btn-outline-secondary bg-white rounded-pill px-3 py-1.5 d-flex align-items-center gap-1 fw-semibold"
+          style="min-height: 38px; font-size: 0.86rem;"
         >
           <i [class]="isExpanded(note.id) ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"></i>
           <span>{{ isExpanded(note.id) ? ('notes.collapse' | translate) : ('notes.expand' | translate) }}</span>
@@ -213,8 +213,8 @@
           <!-- View Full Modal Button -->
           <button
             (click)="openFullStudyModal(note)"
-            class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1.5 d-flex align-items-center gap-1"
-            style="font-size: 0.82rem;"
+            class="btn btn-sm btn-outline-primary bg-white rounded-pill px-3 py-1.5 d-flex align-items-center gap-1 fw-semibold shadow-xs"
+            style="min-height: 38px; font-size: 0.86rem;"
           >
             <i class="bi bi-fullscreen"></i>
             <span>পাঠ মোড (Reader)</span>
@@ -224,8 +224,8 @@
           <button
             (click)="startPracticeQuiz(note)"
             [disabled]="isGeneratingQuizForNoteId === note.id"
-            class="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-3 py-1.5 d-flex align-items-center gap-1.5 shadow-xs"
-            style="font-size: 0.84rem;"
+            class="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-3.5 py-1.5 d-flex align-items-center gap-1.5 shadow-xs"
+            style="min-height: 38px; font-size: 0.88rem;"
           >
             <span *ngIf="isGeneratingQuizForNoteId === note.id" class="spinner-border spinner-border-sm" role="status"></span>
             <i *ngIf="isGeneratingQuizForNoteId !== note.id" class="bi bi-lightning-charge-fill text-dark"></i>

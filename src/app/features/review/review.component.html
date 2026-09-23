@@ -76,12 +76,12 @@
     </div>
 
     <!-- Question Text -->
-    <h4 class="fs-5 fw-bold text-dark mb-4 bengali-text">
+    <h4 class="fs-5 fw-bold text-dark mb-3.5 bengali-text font-display" style="line-height: 1.75; font-size: 1.18rem;">
       {{ q.question }}
     </h4>
 
     <!-- Options Review -->
-    <div class="options-container mb-3">
+    <div class="options-container mb-3.5">
       <div
         *ngFor="let opt of q.options; let optIdx = index"
         class="option-card"
@@ -94,29 +94,30 @@
         <div class="option-text bengali-text">
           {{ opt }}
         </div>
-        <div class="ms-2">
-          <span *ngIf="optIdx === q.correctAnswer" class="text-success fw-bold small">
-            <i class="bi bi-check-circle-fill fs-5"></i>
+        <div class="ms-2 flex-shrink-0">
+          <span *ngIf="optIdx === q.correctAnswer" class="text-success fw-bold">
+            <i class="bi bi-check-circle-fill fs-4"></i>
           </span>
-          <span *ngIf="userAnswerMap[q.id] === optIdx && optIdx !== q.correctAnswer" class="text-danger fw-bold small">
-            <i class="bi bi-x-circle-fill fs-5"></i>
+          <span *ngIf="userAnswerMap[q.id] === optIdx && optIdx !== q.correctAnswer" class="text-danger fw-bold">
+            <i class="bi bi-x-circle-fill fs-4"></i>
           </span>
         </div>
       </div>
     </div>
 
     <!-- Standard Explanation Box -->
-    <div class="p-3 bg-light rounded-3 border mb-3">
-      <div class="fw-bold small text-muted text-uppercase mb-1">
-        <i class="bi bi-info-circle-fill text-primary me-1"></i> {{ 'review.explanation' | translate }}
+    <div class="p-3.5 bg-light rounded-3 border mb-3">
+      <div class="fw-bold small text-muted text-uppercase mb-1.5 d-flex align-items-center gap-1">
+        <i class="bi bi-info-circle-fill text-primary"></i>
+        <span>{{ 'review.explanation' | translate }}</span>
       </div>
-      <div class="bengali-text text-dark small">
+      <div class="bengali-text text-dark" style="line-height: 1.75; font-size: 0.98rem;">
         {{ q.explanation }}
       </div>
     </div>
 
     <!-- AI Pedagogical Deep-Dive Explanation Container (if generated) -->
-    <div *ngIf="aiExplaining[q.id]" class="p-3 bg-primary-subtle text-primary-emphasis rounded-3 border border-primary mb-3 animate__animated animate__fadeIn">
+    <div *ngIf="aiExplaining[q.id]" class="p-3.5 bg-primary-subtle text-primary-emphasis rounded-3 border border-primary mb-3 animate__animated animate__fadeIn">
       <div class="d-flex align-items-center gap-2 mb-2 fw-bold small">
         <i class="bi bi-stars text-primary fs-5"></i> {{ 'review.aiExplanationTitle' | translate }}
       </div>
@@ -124,31 +125,31 @@
         <span class="spinner-border spinner-border-sm me-2" role="status"></span>
         {{ 'review.generatingExp' | translate }}
       </div>
-      <div *ngIf="aiExplanationError[q.id]" class="alert alert-danger p-2 small mb-0 font-monospace">
+      <div *ngIf="aiExplanationError[q.id]" class="alert alert-danger p-2.5 small mb-0 font-monospace">
         <i class="bi bi-exclamation-triangle-fill me-1"></i> {{ aiExplanationError[q.id] }}
       </div>
-      <div *ngIf="aiExplanations[q.id]" class="bengali-text small">
+      <div *ngIf="aiExplanations[q.id]" class="bengali-text" style="line-height: 1.75; font-size: 0.98rem;">
         {{ aiExplanations[q.id] }}
       </div>
     </div>
 
     <!-- AI Similar Question Error Banner (if error) -->
-    <div *ngIf="similarError[q.id]" class="alert alert-danger p-2 small mb-3 font-monospace">
+    <div *ngIf="similarError[q.id]" class="alert alert-danger p-2.5 small mb-3 font-monospace">
       <i class="bi bi-exclamation-triangle-fill me-1"></i> {{ similarError[q.id] }}
     </div>
 
     <!-- Targeted Practice & Topic Tutor Action Area (Stacked Buttons) -->
-    <div class="p-3 rounded-3 mt-3 border" [ngClass]="isUserIncorrect(q) ? 'bg-amber-50 border-warning' : 'bg-light'">
-      <div class="d-flex flex-column gap-2">
+    <div class="p-3.5 rounded-3 mt-3 border" [ngClass]="isUserIncorrect(q) ? 'bg-warning-subtle border-warning' : 'bg-light'">
+      <div class="d-flex flex-column gap-2.5">
         <!-- Button 1: 10 Practice Questions on this question / topic -->
         <button
           (click)="generateSimilarQuiz(q)"
           [disabled]="similarLoading[q.id]"
           class="btn btn-warning text-dark fw-bold rounded-pill px-4 py-2.5 d-flex align-items-center justify-content-center gap-2 shadow-xs w-100"
-          style="min-height: 44px; font-size: 0.92rem;"
+          style="min-height: 48px; font-size: 0.95rem;"
         >
           <span *ngIf="similarLoading[q.id]" class="spinner-border spinner-border-sm" role="status"></span>
-          <i *ngIf="!similarLoading[q.id]" class="bi bi-lightning-charge-fill text-dark fs-6"></i>
+          <i *ngIf="!similarLoading[q.id]" class="bi bi-lightning-charge-fill text-dark fs-5"></i>
           <span>{{ similarLoading[q.id] ? ('review.generatingSimilarQuiz' | translate) : ('review.similarQuizBtn' | translate) }}</span>
         </button>
 
@@ -156,9 +157,9 @@
         <button
           (click)="openTopicStudyModal(q)"
           class="btn btn-primary text-white fw-bold rounded-pill px-4 py-2.5 d-flex align-items-center justify-content-center gap-2 shadow-sm w-100"
-          style="min-height: 44px; font-size: 0.92rem;"
+          style="min-height: 48px; font-size: 0.95rem;"
         >
-          <i class="bi bi-mortarboard-fill fs-6"></i>
+          <i class="bi bi-mortarboard-fill fs-5"></i>
           <span>{{ 'review.learnTopicBtn' | translate }}</span>
         </button>
       </div>
