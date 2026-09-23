@@ -17,6 +17,7 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
 })
 export class NavbarComponent implements OnInit {
   public currentStreak: number = 1;
+  public savedNotesCount: number = 0;
   public currentLang: AppLanguage = 'bn';
   public currentUser: User | null = null;
   public isAuthLoading: boolean = false;
@@ -30,6 +31,7 @@ export class NavbarComponent implements OnInit {
   ) {}
 
 
+
   ngOnInit(): void {
     this.currentStreak = this.storageService.getUserStats().currentStreak || 1;
     this.currentLang = this.langService.currentLanguage;
@@ -37,6 +39,11 @@ export class NavbarComponent implements OnInit {
 
     this.storageService.stats$.subscribe(stats => {
       this.currentStreak = stats.currentStreak || 1;
+      this.cdr.markForCheck();
+    });
+
+    this.storageService.savedNotes$.subscribe(notes => {
+      this.savedNotesCount = notes ? notes.length : 0;
       this.cdr.markForCheck();
     });
 

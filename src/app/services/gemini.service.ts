@@ -3,7 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
-import { QuizQuestion, QuizResponse, QuizAttempt, PreviousYearQuestion, TET_SUBJECTS } from '../shared/models/quiz.model';
+import { QuizQuestion, QuizResponse, QuizAttempt, PreviousYearQuestion, TET_SUBJECTS, TopicNote } from '../shared/models/quiz.model';
 
 @Injectable({
   providedIn: 'root'
@@ -265,6 +265,113 @@ Requirements:
   }
 
   /**
+   * Generate comprehensive, memorable Pedagogical Topic Study Notes with Gemini AI.
+   * Teaches the core concept, key rules/theories, real-life classroom examples,
+   * memory mnemonics/shortcuts, common exam mistakes to avoid, and revision takeaways.
+   */
+  public generateTopicStudyNotes(
+    baseQuestion: QuizQuestion,
+    language: string = 'Bengali'
+  ): Observable<TopicNote> {
+    const isEn = language.toLowerCase() === 'english';
+    const prompt = `
+You are an expert Primary Teacher Eligibility Test (WB Primary TET) Master Mentor, child pedagogy researcher, and curriculum specialist.
+
+A student struggled with or wants to master the core topic behind this question:
+Subject: ${baseQuestion.subject}
+Question: ${baseQuestion.question}
+Correct Answer: ${baseQuestion.options[baseQuestion.correctAnswer]}
+${baseQuestion.explanation ? `Context / Explanation: ${baseQuestion.explanation}` : ''}
+
+Your Task:
+Teach this exact topic comprehensively so the student understands the underlying concepts deeply, can never forget it, and scores full marks in TET exams.
+
+Generate structured study notes in ${isEn ? 'English' : 'Bengali (বাংলা)'} strictly conforming to this JSON format:
+{
+  "topicTitle": "${isEn ? 'Specific Topic Title (e.g. Jean Piaget Cognitive Development Stages)' : 'স্পষ্ট টপিক শিরোনাম (যেমন: পিঁয়াজের প্রজ্ঞামূলক বিকাশ তত্ত্ব বা ভগ্নাংশের ল.সা.গু)'}",
+  "subject": "${baseQuestion.subject}",
+  "coreConcept": "A crystal-clear, lucid explanation of the concept, what it is, its purpose, and foundational meaning in ${isEn ? 'English' : 'Bengali'}.",
+  "keyPoints": [
+    "Key theoretical rule, stage, formula, or pedagogical principle 1",
+    "Key theoretical rule, stage, formula, or pedagogical principle 2",
+    "Key theoretical rule, stage, formula, or pedagogical principle 3",
+    "Key theoretical rule, stage, formula, or pedagogical principle 4"
+  ],
+  "realLifeExample": "A practical, memorable real-life classroom teaching scenario, solved mathematical example, or everyday application illustrating this concept.",
+  "memoryMnemonics": "An ingenious, catchy memory trick, acronym, rhyme, or mental hook to help the student remember this forever without getting confused.",
+  "commonMistakes": [
+    "Common misconception or trap that students frequently fall into in TET exams",
+    "How to distinguish between confusing related terms or options"
+  ],
+  "examTakeaways": [
+    "High-yield revision point 1 for fast last-minute review",
+    "High-yield revision point 2",
+    "High-yield revision point 3"
+  ],
+  "tags": ["TET", "${baseQuestion.subject}"]
+}
+
+Requirements:
+1. Language must be ${isEn ? 'English' : 'Bengali (বাংলা)'}.
+2. Ensure high pedagogical depth, authentic TET standards, and crystal-clear clarity.
+3. Return ONLY valid JSON format with NO markdown code blocks, no backticks.
+`;
+
+    return this.callGeminiApi(prompt).pipe(
+      map(rawText => this.parseAndValidateTopicNote(rawText, baseQuestion, language))
+    );
+  }
+
+  /**
+   * Generate 10 Targeted Practice Questions directly from a Saved Topic Note.
+   */
+  public generateQuizFromTopicNote(
+    topicNote: TopicNote,
+    numberOfQuestions: number = 10,
+    language: string = 'Bengali'
+  ): Observable<QuizResponse> {
+    const isEn = language.toLowerCase() === 'english';
+    const prompt = `
+You are an expert Primary TET question paper creator.
+
+Generate a focused, high-yield practice quiz for WB Primary TET candidates on this topic:
+Topic: ${topicNote.topicTitle}
+Subject: ${topicNote.subject}
+Core Concept: ${topicNote.coreConcept}
+Key Points: ${topicNote.keyPoints?.join('; ') || ''}
+
+Task:
+Generate exactly ${numberOfQuestions} diverse, high-quality multiple-choice questions testing various aspects, applications, and scenarios of this topic.
+
+Requirements:
+1. Language: ${isEn ? 'English' : 'Bengali (বাংলা)'}.
+2. Exactly 4 options per question.
+3. Exactly 1 correct answer (correctAnswer must be a 0-indexed integer 0, 1, 2, or 3).
+4. Detailed, step-by-step educational explanations in ${isEn ? 'English' : 'Bengali'}.
+5. Return ONLY valid JSON format:
+{
+  "quizTitle": "${topicNote.topicTitle} - Practice Quiz",
+  "language": "${isEn ? 'English' : 'Bengali'}",
+  "questions": [
+    {
+      "id": 1,
+      "subject": "${topicNote.subject}",
+      "question": "Question text...",
+      "options": ["Opt 1", "Opt 2", "Opt 3", "Opt 4"],
+      "correctAnswer": 0,
+      "explanation": "Explanation...",
+      "difficulty": "Medium"
+    }
+  ]
+}
+`;
+
+    return this.callGeminiApi(prompt).pipe(
+      map(rawResponse => this.parseAndValidateQuizResponse(rawResponse, `${topicNote.topicTitle} - Practice Quiz`, language))
+    );
+  }
+
+  /**
    * Candidate models ordered by reliability, speed, and availability
    */
   private readonly candidateModels: string[] = [
@@ -317,6 +424,19 @@ Requirements:
     const currentModel = models[index];
     const url = `${environment.geminiApiUrl}/${currentModel}:generateContent?key=${apiKey}`;
 
+    const isJson = prompt.toLowerCase().includes('json') || prompt.includes('{');
+
+    const generationConfig: any = {
+      temperature: 0.3,
+      topK: 40,
+      topP: 0.95,
+      maxOutputTokens: 8192
+    };
+
+    if (isJson) {
+      generationConfig.responseMimeType = 'application/json';
+    }
+
     const body = {
       contents: [
         {
@@ -327,12 +447,7 @@ Requirements:
           ]
         }
       ],
-      generationConfig: {
-        temperature: 0.4,
-        topK: 40,
-        topP: 0.95,
-        maxOutputTokens: 8192
-      }
+      generationConfig: generationConfig
     };
 
     return this.http.post<any>(url, body).pipe(
@@ -553,20 +668,30 @@ Required JSON Structure:
     defaultLanguage: string
   ): PreviousYearQuestion[] {
     const cleaned = this.extractCleanJson(rawText);
-    let parsed: any;
+    let parsed: any = null;
+
     try {
       parsed = JSON.parse(cleaned);
-    } catch (e) {
-      throw new Error(`JSON_PARSE_ERROR: Failed to parse Gemini response as JSON: ${(e as Error).message}`);
+    } catch (e1) {
+      console.warn('[GeminiService] Direct PYQ JSON.parse failed. Attempting syntax repair...', (e1 as Error).message);
+      try {
+        const repaired = cleaned
+          .replace(/,\s*([\}\]])/g, '$1')
+          .replace(/\n\s*"[^":\n\r]+"\s*,\s*(?=\n\s*")/g, '\n')
+          .replace(/[\x00-\x1F\x7F-\x9F]/g, ' ');
+        parsed = JSON.parse(repaired);
+      } catch (e2) {
+        console.warn('[GeminiService] Secondary PYQ repair failed. Using regex fallback...');
+      }
     }
 
     let rawQuestions: any[] = [];
-    if (Array.isArray(parsed)) {
-      rawQuestions = parsed;
-    } else if (parsed && Array.isArray(parsed.questions)) {
-      rawQuestions = parsed.questions;
-    } else {
-      throw new Error('Invalid PYQ response structure: questions array missing');
+    if (parsed) {
+      if (Array.isArray(parsed)) {
+        rawQuestions = parsed;
+      } else if (Array.isArray(parsed.questions)) {
+        rawQuestions = parsed.questions;
+      }
     }
 
     const validatedList: PreviousYearQuestion[] = [];
@@ -580,11 +705,28 @@ Required JSON Structure:
       }
     }
 
-    if (validatedList.length === 0) {
-      throw new Error('No valid previous year questions could be extracted from Gemini response');
+    if (validatedList.length > 0) {
+      return validatedList;
     }
 
-    return validatedList;
+    // Fallback: extract questions via regex
+    const regexQuestions = this.extractQuestionsWithRegex(rawText, defaultSubject);
+    if (regexQuestions.length > 0) {
+      return regexQuestions.map((q, idx) => ({
+        id: `gemini-pyq-${defaultYear}-${idx + 1}-${Date.now() % 10000}`,
+        year: defaultYear,
+        examName: `WB Primary TET ${defaultYear}`,
+        subject: q.subject || defaultSubject,
+        topic: `${q.subject || defaultSubject} Concepts`,
+        question: q.question,
+        options: q.options,
+        correctAnswer: q.correctAnswer,
+        explanation: q.explanation,
+        difficulty: q.difficulty
+      }));
+    }
+
+    throw new Error('No valid previous year questions could be extracted from Gemini response');
   }
 
   private validateSinglePyqQuestion(
@@ -645,7 +787,7 @@ Required JSON Structure:
   }
 
   /**
-   * Strips markdown fences, parses JSON, and validates complete schema
+   * Strips markdown fences, parses JSON, and validates complete schema with auto-repair fallbacks
    */
   private parseAndValidateQuizResponse(
     rawText: string,
@@ -653,45 +795,116 @@ Required JSON Structure:
     defaultLanguage: string
   ): QuizResponse {
     const cleaned = this.extractCleanJson(rawText);
-    let parsed: any;
+    let parsed: any = null;
+
+    // 1. Direct JSON parse attempt
     try {
       parsed = JSON.parse(cleaned);
-    } catch (e) {
-      throw new Error(`JSON_PARSE_ERROR: Failed to parse Gemini response as JSON: ${(e as Error).message}`);
-    }
-
-    if (!parsed || !Array.isArray(parsed.questions) || parsed.questions.length === 0) {
-      if (Array.isArray(parsed)) {
-        parsed = {
-          quizTitle: defaultTitle,
-          language: defaultLanguage,
-          questions: parsed
-        };
-      } else {
-        throw new Error('Invalid quiz response structure: questions array missing');
-      }
-    }
-
-    const validatedQuestions: QuizQuestion[] = [];
-    for (let i = 0; i < parsed.questions.length; i++) {
-      const q = parsed.questions[i];
+    } catch (e1) {
+      console.warn('[GeminiService] Initial Quiz JSON.parse failed. Attempting syntax repair...', (e1 as Error).message);
+      
+      // 2. Secondary repair: fix orphaned lines and trailing commas
       try {
-        const validated = this.validateSingleQuestion(q, i + 1);
-        validatedQuestions.push(validated);
-      } catch (err) {
-        console.warn(`Skipping question ${i}:`, err);
+        const repaired = cleaned
+          .replace(/,\s*([\}\]])/g, '$1')
+          .replace(/\n\s*"[^":\n\r]+"\s*,\s*(?=\n\s*")/g, '\n')
+          .replace(/[\x00-\x1F\x7F-\x9F]/g, ' ');
+        parsed = JSON.parse(repaired);
+      } catch (e2) {
+        console.warn('[GeminiService] Secondary repair failed. Extracting questions via regex engine...');
       }
     }
 
-    if (validatedQuestions.length === 0) {
-      throw new Error('No valid questions could be extracted from Gemini response');
+    // 3. If parsed successfully as object or array
+    if (parsed) {
+      let rawQuestions: any[] = [];
+      if (Array.isArray(parsed)) {
+        rawQuestions = parsed;
+      } else if (Array.isArray(parsed.questions)) {
+        rawQuestions = parsed.questions;
+      }
+
+      const validatedQuestions: QuizQuestion[] = [];
+      for (let i = 0; i < rawQuestions.length; i++) {
+        const q = rawQuestions[i];
+        try {
+          const validated = this.validateSingleQuestion(q, i + 1);
+          validatedQuestions.push(validated);
+        } catch (err) {
+          console.warn(`Skipping question ${i}:`, err);
+        }
+      }
+
+      if (validatedQuestions.length > 0) {
+        return {
+          quizTitle: parsed.quizTitle || defaultTitle,
+          language: parsed.language || defaultLanguage,
+          questions: validatedQuestions
+        };
+      }
     }
 
-    return {
-      quizTitle: parsed.quizTitle || defaultTitle,
-      language: parsed.language || defaultLanguage,
-      questions: validatedQuestions
-    };
+    // 4. Robust Regex Fallback Extractor (guarantees quiz never fails even if syntax is malformed)
+    const regexQuestions = this.extractQuestionsWithRegex(rawText, 'General');
+    if (regexQuestions.length > 0) {
+      return {
+        quizTitle: defaultTitle,
+        language: defaultLanguage,
+        questions: regexQuestions
+      };
+    }
+
+    throw new Error('No valid questions could be extracted from Gemini response');
+  }
+
+  private extractQuestionsWithRegex(rawText: string, defaultSubject: string): QuizQuestion[] {
+    const questions: QuizQuestion[] = [];
+    const questionBlocks = rawText.split(/"id"\s*:\s*\d+/i);
+    
+    for (let i = 1; i < questionBlocks.length; i++) {
+      const block = questionBlocks[i];
+      const qMatch = block.match(/"question"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"/i);
+      const questionText = qMatch ? qMatch[1].replace(/\\"/g, '"') : '';
+      
+      const optMatch = block.match(/"options"\s*:\s*\[([\s\S]*?)\]/i);
+      let options: string[] = [];
+      if (optMatch) {
+        options = optMatch[1]
+          .split(/,\s*\n|",\s*"/)
+          .map(s => s.replace(/^[\["\s]+|[\]"\s,]+$/g, '').trim())
+          .filter(s => s.length > 0);
+      }
+      
+      if (options.length < 4) {
+        options = ['ক', 'খ', 'গ', 'ঘ'];
+      } else if (options.length > 4) {
+        options = options.slice(0, 4);
+      }
+      
+      const ansMatch = block.match(/"correctAnswer"\s*:\s*(\d+)/i);
+      let correctAnswer = ansMatch ? parseInt(ansMatch[1], 10) : 0;
+      if (correctAnswer < 0 || correctAnswer > 3) correctAnswer = 0;
+      
+      const expMatch = block.match(/"explanation"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"/i);
+      const explanation = expMatch ? expMatch[1].replace(/\\"/g, '"') : 'Educational explanation.';
+      
+      const subMatch = block.match(/"subject"\s*:\s*"([^"]+)"/i);
+      const subject = subMatch ? subMatch[1] : defaultSubject;
+      
+      if (questionText.length > 0) {
+        questions.push({
+          id: i,
+          subject: subject,
+          question: questionText,
+          options: options,
+          correctAnswer: correctAnswer,
+          explanation: explanation,
+          difficulty: 'Medium'
+        });
+      }
+    }
+    
+    return questions;
   }
 
   private validateSingleQuestion(
@@ -740,43 +953,129 @@ Required JSON Structure:
     if (!text) return '{}';
     let cleaned = text.trim();
 
-    if (cleaned.startsWith('```json')) {
-      cleaned = cleaned.substring(7);
-    } else if (cleaned.startsWith('```')) {
-      cleaned = cleaned.substring(3);
-    }
+    // 1. Remove markdown code fences
+    cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
 
-    if (cleaned.endsWith('```')) {
-      cleaned = cleaned.substring(0, cleaned.length - 3);
-    }
+    // 2. Remove thoughts
+    cleaned = cleaned.replace(/<thought>[\s\S]*?<\/thought>/gi, '').trim();
 
-    cleaned = cleaned.trim();
-
-    const firstOpenBrace = cleaned.indexOf('{');
-    const firstOpenBracket = cleaned.indexOf('[');
+    // 3. Find outermost bounds
+    const firstBrace = cleaned.indexOf('{');
+    const firstBracket = cleaned.indexOf('[');
     let startIdx = -1;
 
-    if (firstOpenBrace !== -1 && firstOpenBracket !== -1) {
-      startIdx = Math.min(firstOpenBrace, firstOpenBracket);
-    } else if (firstOpenBrace !== -1) {
-      startIdx = firstOpenBrace;
-    } else if (firstOpenBracket !== -1) {
-      startIdx = firstOpenBracket;
+    if (firstBrace !== -1 && firstBracket !== -1) {
+      startIdx = Math.min(firstBrace, firstBracket);
+    } else if (firstBrace !== -1) {
+      startIdx = firstBrace;
+    } else if (firstBracket !== -1) {
+      startIdx = firstBracket;
     }
 
-    const lastCloseBrace = cleaned.lastIndexOf('}');
-    const lastCloseBracket = cleaned.lastIndexOf(']');
-    const endIdx = Math.max(lastCloseBrace, lastCloseBracket);
-
-    if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
-      cleaned = cleaned.substring(startIdx, endIdx + 1);
+    if (startIdx !== -1) {
+      cleaned = cleaned.substring(startIdx);
+      const isObj = cleaned.startsWith('{');
+      const closeChar = isObj ? '}' : ']';
+      const lastClose = cleaned.lastIndexOf(closeChar);
+      if (lastClose !== -1) {
+        cleaned = cleaned.substring(0, lastClose + 1);
+      }
     }
 
-    return cleaned;
+    // 4. Auto-repair dangling orphaned lines without colons (e.g. `"শ: অপশন নিচে",`)
+    cleaned = cleaned.replace(/\n\s*"[^":\n\r]+"\s*,\s*(?=\n\s*")/g, '\n');
+
+    // 5. Auto-repair trailing commas before closing braces/brackets
+    cleaned = cleaned.replace(/,\s*([\}\]])/g, '$1');
+
+    return cleaned.trim();
   }
 
   private cleanPlainTextResponse(text: string): string {
     if (!text) return '';
     return text.replace(/```json/g, '').replace(/```/g, '').trim();
   }
+
+  private parseAndValidateTopicNote(
+    rawText: string,
+    baseQuestion: QuizQuestion,
+    defaultLanguage: string
+  ): TopicNote {
+    const isEn = defaultLanguage.toLowerCase() === 'english';
+    const noteId = `note_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const cleaned = this.extractCleanJson(rawText);
+
+    let parsed: any = null;
+
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch (e1) {
+      console.warn('[GeminiService] Direct parse failed for Topic Note. Attempting fallback parse...', (e1 as Error).message);
+      
+      try {
+        const secondaryCleaned = cleaned
+          .replace(/,\s*([\}\]])/g, '$1')
+          .replace(/\n\s*"[^":\n\r]+"\s*,\s*(?=\n\s*")/g, '\n')
+          .replace(/[\x00-\x1F\x7F-\x9F]/g, ' ');
+        parsed = JSON.parse(secondaryCleaned);
+      } catch (e2) {
+        console.warn('[GeminiService] Secondary parse failed. Using regex field extractor...');
+      }
+    }
+
+    // If still not parsed, use regex field extraction directly from rawText
+    if (!parsed || typeof parsed !== 'object') {
+      parsed = this.extractTopicNoteFieldsWithRegex(rawText, baseQuestion, isEn);
+    }
+
+    return {
+      id: noteId,
+      topicTitle: parsed.topicTitle || `${baseQuestion.subject} - Concept Note`,
+      subject: parsed.subject || baseQuestion.subject,
+      sourceQuestion: baseQuestion.question,
+      sourceExplanation: baseQuestion.explanation,
+      coreConcept: parsed.coreConcept || (baseQuestion.explanation || (isEn ? 'Core conceptual overview is provided below.' : 'মূল ধারণার বিশদ বিবরণ নিচে দেওয়া হলো।')),
+      keyPoints: Array.isArray(parsed.keyPoints) && parsed.keyPoints.length > 0 
+        ? parsed.keyPoints.map((k: any) => String(k).trim()) 
+        : [parsed.coreConcept || (isEn ? 'Key pedagogical guidelines.' : 'গুরুত্বপূর্ণ নিয়ম ও নির্দেশনাবলি।')],
+      realLifeExample: parsed.realLifeExample ? String(parsed.realLifeExample).trim() : '',
+      memoryMnemonics: parsed.memoryMnemonics ? String(parsed.memoryMnemonics).trim() : '',
+      commonMistakes: Array.isArray(parsed.commonMistakes) 
+        ? parsed.commonMistakes.map((m: any) => String(m).trim()) 
+        : [],
+      examTakeaways: Array.isArray(parsed.examTakeaways) && parsed.examTakeaways.length > 0 
+        ? parsed.examTakeaways.map((t: any) => String(t).trim()) 
+        : [parsed.coreConcept || ''],
+      savedAt: new Date().toISOString(),
+      language: isEn ? 'English' : 'Bengali',
+      tags: Array.isArray(parsed.tags) ? parsed.tags : ['TET', baseQuestion.subject]
+    };
+  }
+
+  private extractTopicNoteFieldsWithRegex(rawText: string, baseQuestion: QuizQuestion, isEn: boolean): any {
+    const extractString = (field: string): string => {
+      const match = rawText.match(new RegExp(`"${field}"\\s*:\\s*"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"`, 'i'));
+      return match ? match[1].replace(/\\"/g, '"') : '';
+    };
+
+    const extractArray = (field: string): string[] => {
+      const match = rawText.match(new RegExp(`"${field}"\\s*:\\s*\\[([^\\]]+)\\]`, 'i'));
+      if (!match) return [];
+      const items = match[1].split(/",\s*"/).map(s => s.replace(/^["\s]+|["\s]+$/g, '').trim());
+      return items.filter(s => s.length > 0);
+    };
+
+    return {
+      topicTitle: extractString('topicTitle') || `${baseQuestion.subject} - ${baseQuestion.question.slice(0, 35)}...`,
+      subject: extractString('subject') || baseQuestion.subject,
+      coreConcept: extractString('coreConcept') || (baseQuestion.explanation || (isEn ? 'Core pedagogical overview.' : 'মৌলিক ধারণা ও ব্যাখ্যা।')),
+      keyPoints: extractArray('keyPoints'),
+      realLifeExample: extractString('realLifeExample'),
+      memoryMnemonics: extractString('memoryMnemonics'),
+      commonMistakes: extractArray('commonMistakes'),
+      examTakeaways: extractArray('examTakeaways')
+    };
+  }
 }
+
+

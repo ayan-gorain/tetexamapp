@@ -1,0 +1,276 @@
+<div class="app-container">
+  
+  <!-- Top Navigation & Header -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div>
+      <a routerLink="/dashboard" class="text-decoration-none text-muted small d-inline-flex align-items-center mb-1">
+        <i class="bi bi-arrow-left me-1"></i> {{ 'result.dashboard' | translate }}
+      </a>
+      <div class="d-flex align-items-center gap-2">
+        <h3 class="fw-bold font-display text-dark mb-0 fs-4">
+          <i class="bi bi-journal-bookmark-fill text-primary me-1.5"></i>
+          {{ 'notes.title' | translate }}
+        </h3>
+        <span class="badge bg-primary text-white rounded-pill px-2.5 py-1 small">
+          {{ savedNotes.length }}
+        </span>
+      </div>
+      <p class="text-muted small mb-0 bengali-text mt-0.5" style="font-size: 0.88rem;">
+        {{ 'dashboard.savedNotesDesc' | translate }}
+      </p>
+    </div>
+
+    <div class="d-flex gap-2">
+      <a routerLink="/dashboard" class="btn btn-outline-primary btn-sm rounded-pill px-3 py-1.5 fw-bold d-flex align-items-center gap-1">
+        <i class="bi bi-play-circle-fill"></i>
+        <span>{{ 'dashboard.startQuiz' | translate }}</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Quiz Generation Error Alert Banner (if any) -->
+  <div *ngIf="quizErrorMessage" class="alert alert-danger alert-dismissible fade show rounded-3 p-3 mb-3 border-danger" role="alert">
+    <div class="d-flex align-items-center gap-2">
+      <i class="bi bi-exclamation-octagon-fill text-danger fs-5"></i>
+      <span class="fw-bold text-danger">ত্রুটি (Error Generating Quiz):</span>
+    </div>
+    <div class="small mt-1 font-monospace">{{ quizErrorMessage }}</div>
+    <button type="button" class="btn-close" (click)="quizErrorMessage = ''"></button>
+  </div>
+
+  <!-- Search and Subject Filters -->
+  <div class="tet-card p-3 p-sm-3.5 mb-4 border shadow-sm bg-white">
+    <div class="row g-2.5 align-items-center">
+      <!-- Search Input -->
+      <div class="col-12 col-md-5">
+        <div class="input-group">
+          <span class="input-group-text bg-light border-end-0 text-muted">
+            <i class="bi bi-search"></i>
+          </span>
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            class="form-control bg-light border-start-0 ps-0"
+            [placeholder]="'notes.searchPlaceholder' | translate"
+            style="font-size: 0.9rem;"
+          />
+          <button *ngIf="searchQuery" (click)="searchQuery = ''" class="btn btn-light border border-start-0 text-muted" type="button">
+            <i class="bi bi-x-circle-fill"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Subject Filter Scrollable Horizontal Tabs -->
+      <div class="col-12 col-md-7">
+        <div class="d-flex flex-nowrap overflow-x-auto gap-1.5 scrollbar-none pb-1">
+          <button
+            class="btn btn-sm rounded-pill px-3 text-nowrap flex-shrink-0 fw-medium"
+            [ngClass]="selectedSubject === 'all' ? 'btn-primary' : 'btn-light border text-dark'"
+            (click)="selectedSubject = 'all'"
+          >
+            {{ 'notes.filterAll' | translate }} ({{ getSubjectNoteCount('all') }})
+          </button>
+          <button
+            *ngFor="let s of subjects"
+            class="btn btn-sm rounded-pill px-2.5 text-nowrap flex-shrink-0 fw-medium"
+            [ngClass]="selectedSubject === s.id ? 'btn-primary' : 'btn-light border text-dark'"
+            (click)="selectedSubject = s.id"
+          >
+            {{ getSubjectDisplayName(s.id) }} ({{ getSubjectNoteCount(s.id) }})
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Saved Notes Cards List -->
+  <div *ngIf="filteredNotes.length > 0; else noNotesTemplate" class="notes-grid">
+    <div *ngFor="let note of filteredNotes" class="tet-card p-3.5 p-sm-4 mb-3.5 border shadow-sm transition-all note-item-card">
+      
+      <!-- Card Top Bar: Subject Badge, Date & Actions -->
+      <div class="d-flex justify-content-between align-items-center mb-2.5">
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge badge-subject">
+            {{ getSubjectDisplayName(note.subject) }}
+          </span>
+          <span class="text-muted small" style="font-size: 0.78rem;">
+            <i class="bi bi-calendar3 me-1"></i> {{ formatDate(note.savedAt) }}
+          </span>
+        </div>
+
+        <div class="d-flex align-items-center gap-1.5">
+          <!-- Copy Note Button -->
+          <button
+            (click)="copyNoteText(note, $event)"
+            class="btn btn-sm btn-light border rounded-circle p-0 d-flex align-items-center justify-content-center"
+            style="width: 32px; height: 32px;"
+            [title]="'notes.copyBtn' | translate"
+          >
+            <i [class]="copiedNoteId === note.id ? 'bi bi-check2 text-success fs-6' : 'bi bi-clipboard text-muted'"></i>
+          </button>
+
+          <!-- Delete Note Button -->
+          <button
+            (click)="deleteNote(note.id, $event)"
+            class="btn btn-sm btn-light border rounded-circle p-0 d-flex align-items-center justify-content-center text-danger hover-bg-danger"
+            style="width: 32px; height: 32px;"
+            [title]="'notes.deleteBtn' | translate"
+          >
+            <i class="bi bi-trash3"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Note Topic Title -->
+      <h4 class="fs-5 fw-bold text-dark mb-2 bengali-text font-display lh-sm cursor-pointer" (click)="openFullStudyModal(note)">
+        {{ note.topicTitle }}
+      </h4>
+
+      <!-- Source Question Preview (if present) -->
+      <div *ngIf="note.sourceQuestion" class="p-2 bg-light rounded-2 border mb-2.5 small text-muted bengali-text" style="font-size: 0.82rem;">
+        <span class="fw-bold text-dark"><i class="bi bi-patch-question-fill text-primary me-1"></i>{{ 'notes.sourceQ' | translate }}:</span> {{ note.sourceQuestion | slice:0:110 }}...
+      </div>
+
+      <!-- Core Concept -->
+      <p class="bengali-text text-dark small mb-3 lh-base" style="font-size: 0.92rem;">
+        {{ note.coreConcept }}
+      </p>
+
+      <!-- Memory Mnemonics Box (Always highlighted) -->
+      <div *ngIf="note.memoryMnemonics" class="mnemonic-banner p-2.5 rounded-3 mb-3 border border-warning bg-warning-subtle text-dark small bengali-text fw-medium">
+        <div class="d-flex align-items-center gap-1.5 fw-bold mb-1 text-amber-900" style="font-size: 0.82rem;">
+          <i class="bi bi-lightbulb-fill text-warning"></i>
+          <span>{{ 'notes.memoryMnemonics' | translate }}:</span>
+        </div>
+        <div>{{ note.memoryMnemonics }}</div>
+      </div>
+
+      <!-- Expanded Detailed Sections (Key Points, Example, Traps, Revision) -->
+      <div *ngIf="isExpanded(note.id)" class="expanded-details-area pt-2 mb-3 animate__animated animate__fadeIn border-top">
+        
+        <!-- Key Points -->
+        <div *ngIf="note.keyPoints && note.keyPoints.length > 0" class="mb-3">
+          <div class="fw-bold small text-dark mb-1.5 d-flex align-items-center gap-1">
+            <i class="bi bi-card-checklist text-primary"></i>
+            <span>{{ 'notes.keyPoints' | translate }}:</span>
+          </div>
+          <ul class="ps-3 mb-0 small bengali-text text-dark">
+            <li *ngFor="let point of note.keyPoints" class="mb-1.5 lh-base">
+              {{ point }}
+            </li>
+          </ul>
+        </div>
+
+        <!-- Real Life Example -->
+        <div *ngIf="note.realLifeExample" class="p-2.5 rounded-2 bg-emerald-50 border border-emerald-200 mb-3 small bengali-text">
+          <div class="fw-bold text-emerald-900 mb-1 d-flex align-items-center gap-1" style="font-size: 0.82rem;">
+            <i class="bi bi-easel2-fill"></i>
+            <span>{{ 'notes.realLifeExample' | translate }}:</span>
+          </div>
+          <div class="text-emerald-950">{{ note.realLifeExample }}</div>
+        </div>
+
+        <!-- Common TET Mistakes -->
+        <div *ngIf="note.commonMistakes && note.commonMistakes.length > 0" class="p-2.5 rounded-2 bg-rose-50 border border-rose-200 mb-3 small bengali-text">
+          <div class="fw-bold text-danger mb-1 d-flex align-items-center gap-1" style="font-size: 0.82rem;">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span>{{ 'notes.commonMistakes' | translate }}:</span>
+          </div>
+          <ul class="ps-3 mb-0 text-dark">
+            <li *ngFor="let mistake of note.commonMistakes" class="mb-1">
+              {{ mistake }}
+            </li>
+          </ul>
+        </div>
+
+        <!-- Exam Revision Takeaways -->
+        <div *ngIf="note.examTakeaways && note.examTakeaways.length > 0" class="p-2.5 rounded-2 bg-purple-50 border border-purple-200 small bengali-text">
+          <div class="fw-bold text-purple-900 mb-1 d-flex align-items-center gap-1" style="font-size: 0.82rem;">
+            <i class="bi bi-journal-bookmark-fill text-purple"></i>
+            <span>{{ 'notes.examTakeaways' | translate }}:</span>
+          </div>
+          <div class="d-flex flex-wrap gap-1.5">
+            <span *ngFor="let takeaway of note.examTakeaways" class="badge bg-white text-dark border border-purple-200 py-1.5 px-2 text-wrap text-start">
+              ✓ {{ takeaway }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Action Footer -->
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 pt-2.5 border-top">
+        <!-- Expand / Collapse Toggle -->
+        <button
+          (click)="toggleExpand(note.id)"
+          class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1.5 d-flex align-items-center gap-1"
+          style="font-size: 0.82rem;"
+        >
+          <i [class]="isExpanded(note.id) ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"></i>
+          <span>{{ isExpanded(note.id) ? ('notes.collapse' | translate) : ('notes.expand' | translate) }}</span>
+        </button>
+
+        <div class="d-flex align-items-center gap-2">
+          <!-- View Full Modal Button -->
+          <button
+            (click)="openFullStudyModal(note)"
+            class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1.5 d-flex align-items-center gap-1"
+            style="font-size: 0.82rem;"
+          >
+            <i class="bi bi-fullscreen"></i>
+            <span>পাঠ মোড (Reader)</span>
+          </button>
+
+          <!-- Practice 10 Questions on this Topic Button -->
+          <button
+            (click)="startPracticeQuiz(note)"
+            [disabled]="isGeneratingQuizForNoteId === note.id"
+            class="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-3 py-1.5 d-flex align-items-center gap-1.5 shadow-xs"
+            style="font-size: 0.84rem;"
+          >
+            <span *ngIf="isGeneratingQuizForNoteId === note.id" class="spinner-border spinner-border-sm" role="status"></span>
+            <i *ngIf="isGeneratingQuizForNoteId !== note.id" class="bi bi-lightning-charge-fill text-dark"></i>
+            <span>{{ isGeneratingQuizForNoteId === note.id ? ('notes.generatingQuiz' | translate) : ('notes.startQuizFromNote' | translate) }}</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Empty Notes Fallback State -->
+  <ng-template #noNotesTemplate>
+    <div class="tet-card p-5 text-center my-4 bg-white border shadow-sm">
+      <div class="display-3 text-muted mb-3 opacity-50">
+        <i class="bi bi-journal-x"></i>
+      </div>
+      <h4 class="fw-bold font-display text-dark mb-2">{{ 'notes.emptyTitle' | translate }}</h4>
+      <p class="text-muted small max-w-500 mx-auto bengali-text mb-4" style="line-height: 1.6;">
+        {{ 'notes.emptyDesc' | translate }}
+      </p>
+
+      <div class="p-3 bg-light rounded-3 max-w-500 mx-auto text-start border mb-4">
+        <div class="fw-bold small text-dark mb-2">
+          <i class="bi bi-stars text-primary me-1"></i> কীভাবে স্টাডি নোট সেভ করবেন:
+        </div>
+        <ol class="small text-muted bengali-text ps-3 mb-0" style="line-height: 1.6;">
+          <li>যেকোনো কুইজ বা মক টেস্ট শুরু করুন।</li>
+          <li>ভুল হওয়া প্রশ্নের নিচে <strong>"🧠 এই বিষয়টি শিখুন"</strong> বাটনে ক্লিক করুন।</li>
+          <li>Gemini AI থেকে তৈরি হওয়া বিশদ নোটের নিচে <strong>"💾 সেভ করুন"</strong> বাটনে ক্লিক করুন।</li>
+        </ol>
+      </div>
+
+      <a routerLink="/dashboard" class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold shadow-sm">
+        <i class="bi bi-play-circle-fill me-1"></i> {{ 'dashboard.startQuiz' | translate }}
+      </a>
+    </div>
+  </ng-template>
+
+</div>
+
+<!-- Full Topic Study Modal View -->
+<app-topic-study-modal
+  [isOpen]="isStudyModalOpen"
+  [initialNote]="selectedNoteForModal"
+  (close)="closeStudyModal()"
+  (practiceTopic)="startPracticeQuiz($event)"
+></app-topic-study-modal>

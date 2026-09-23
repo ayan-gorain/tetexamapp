@@ -77,7 +77,58 @@
         </div>
       </div>
     </div>
+
+    <!-- Practice Mode Instant Concept Drill & AI Topic Study Box -->
+    <div *ngIf="config?.mode === 'practice' && isCurrentAnswered()" class="mt-4 p-3.5 rounded-3 border animate__animated animate__fadeIn" [ngClass]="isCurrentWrong() ? 'bg-amber-50 border-warning' : 'bg-success-subtle border-success'">
+      
+      <!-- Status Header -->
+      <div class="d-flex align-items-center justify-content-between gap-2 mb-2.5">
+        <div class="d-flex align-items-center gap-1.5 fw-bold" [ngClass]="isCurrentWrong() ? 'text-danger' : 'text-success'">
+          <i [class]="isCurrentWrong() ? 'bi bi-x-circle-fill fs-5' : 'bi bi-check-circle-fill fs-5'"></i>
+          <span>{{ isCurrentWrong() ? ('review.wrongMark' | translate) : ('review.correctMark' | translate) }}</span>
+        </div>
+        <span class="badge bg-white text-dark border small">
+          {{ 'quiz.instantFeedback' | translate }}
+        </span>
+      </div>
+
+      <!-- Quick Explanation Snippet if available -->
+      <div *ngIf="currentQuestion.explanation" class="p-2.5 bg-white rounded-2 border mb-3 small bengali-text text-dark" style="font-size: 0.88rem;">
+        <strong class="text-primary"><i class="bi bi-info-circle-fill me-1"></i>ব্যাখ্যা:</strong> {{ currentQuestion.explanation }}
+      </div>
+
+      <!-- Similar Questions Error if any -->
+      <div *ngIf="similarError" class="alert alert-danger p-2 small mb-2.5 font-monospace">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i> {{ similarError }}
+      </div>
+
+      <!-- The 2 Stacked Action Buttons -->
+      <div class="d-flex flex-column gap-2">
+        <!-- Button 1: 10 Practice Questions on this topic -->
+        <button
+          (click)="generate10SimilarQuestions()"
+          [disabled]="isGeneratingSimilar"
+          class="btn btn-warning text-dark fw-bold rounded-pill px-4 py-2.5 d-flex align-items-center justify-content-center gap-2 shadow-xs w-100"
+          style="min-height: 44px; font-size: 0.92rem;"
+        >
+          <span *ngIf="isGeneratingSimilar" class="spinner-border spinner-border-sm" role="status"></span>
+          <i *ngIf="!isGeneratingSimilar" class="bi bi-lightning-charge-fill text-dark fs-6"></i>
+          <span>{{ isGeneratingSimilar ? ('notes.generatingQuiz' | translate) : ('review.similarQuizBtn' | translate) }}</span>
+        </button>
+
+        <!-- Button 2 (Directly Below Button 1): Learn this Topic (AI Study Notes) -->
+        <button
+          (click)="openTopicStudyModal()"
+          class="btn btn-primary text-white fw-bold rounded-pill px-4 py-2.5 d-flex align-items-center justify-content-center gap-2 shadow-sm w-100"
+          style="min-height: 44px; font-size: 0.92rem;"
+        >
+          <i class="bi bi-mortarboard-fill fs-6"></i>
+          <span>{{ 'review.learnTopicBtn' | translate }}</span>
+        </button>
+      </div>
+    </div>
   </div>
+
 
   <!-- Question Palette Accordion / Quick Jump -->
   <div class="tet-card p-3 mb-4">
@@ -217,3 +268,12 @@
     </div>
   </div>
 </ng-template>
+
+<!-- Reusable Topic Study Modal Component -->
+<app-topic-study-modal
+  [isOpen]="isStudyModalOpen"
+  [question]="currentQuestion"
+  (close)="closeTopicStudyModal()"
+  (practiceTopic)="startTopicPractice($event)"
+></app-topic-study-modal>
+

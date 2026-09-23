@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { QuizAttempt, UserStats, SubjectPerformance, TET_SUBJECTS } from '../shared/models/quiz.model';
+import { QuizAttempt, UserStats, SubjectPerformance, TET_SUBJECTS, TopicNote } from '../shared/models/quiz.model';
 import { AuthService } from './auth.service';
 
 @Injectable({
@@ -9,6 +9,7 @@ import { AuthService } from './auth.service';
 export class StorageService {
   private readonly BASE_ATTEMPTS_KEY = 'tet_master_quiz_attempts';
   private readonly BASE_STATS_KEY = 'tet_master_user_stats';
+  private readonly BASE_NOTES_KEY = 'tet_master_saved_notes';
 
   private currentUserId: string = 'guest';
 
@@ -17,6 +18,9 @@ export class StorageService {
 
   private statsSubject = new BehaviorSubject<UserStats>(this.getDefaultStats());
   public stats$: Observable<UserStats> = this.statsSubject.asObservable();
+
+  private savedNotesSubject = new BehaviorSubject<TopicNote[]>([]);
+  public savedNotes$: Observable<TopicNote[]> = this.savedNotesSubject.asObservable();
 
   constructor(private authService: AuthService) {
     this.authService.user$.subscribe(user => {
@@ -41,18 +45,26 @@ export class StorageService {
     return `${this.BASE_STATS_KEY}_${this.currentUserId}`;
   }
 
+  private getNotesKey(): string {
+    return `${this.BASE_NOTES_KEY}_${this.currentUserId}`;
+  }
+
   private loadUserData(userId: string): void {
     try {
       // If not logged in (guest), keep clean state and remove old legacy test data
       if (userId === 'guest') {
         localStorage.removeItem(this.BASE_ATTEMPTS_KEY);
         localStorage.removeItem(this.BASE_STATS_KEY);
+        localStorage.removeItem(this.BASE_NOTES_KEY);
         localStorage.removeItem(`${this.BASE_ATTEMPTS_KEY}_guest`);
         localStorage.removeItem(`${this.BASE_STATS_KEY}_guest`);
+        localStorage.removeItem(`${this.BASE_NOTES_KEY}_guest`);
         this.attemptsSubject.next([]);
+        this.savedNotesSubject.next([]);
         this.statsSubject.next(this.getDefaultStats());
         return;
       }
+
 
       // Logged-in user: load strictly their personal history
       const attemptsKey = this.getAttemptsKey();
@@ -78,9 +90,19 @@ export class StorageService {
           this.statsSubject.next(this.getDefaultStats());
         }
       }
+
+      const notesKey = this.getNotesKey();
+      const savedNotes = localStorage.getItem(notesKey);
+      if (savedNotes) {
+        const parsed: TopicNote[] = JSON.parse(savedNotes);
+        this.savedNotesSubject.next(parsed);
+      } else {
+        this.savedNotesSubject.next([]);
+      }
     } catch (e) {
       console.error(`Error loading storage data for user ${userId}`, e);
       this.attemptsSubject.next([]);
+      this.savedNotesSubject.next([]);
       this.statsSubject.next(this.getDefaultStats());
     }
   }
@@ -242,10 +264,77 @@ export class StorageService {
     this.statsSubject.next(stats);
   }
 
+  /**
+   * Save a generated topic note to the user's Study Vault
+   */
+  public saveTopicNote(note: TopicNote): void {
+    const currentNotes = this.savedNotesSubject.value;
+    // Check if already saved (by id or identical topic title)
+    const existingIndex = currentNotes.findIndex(n => n.id === note.id || (n.topicTitle.toLowerCase() === note.topicTitle.toLowerCase() && n.subject === note.subject));
+    
+    let updatedNotes: TopicNote[];
+    if (existingIndex >= 0) {
+      // Update existing note
+      updatedNotes = [...currentNotes];
+      updatedNotes[existingIndex] = { ...note, id: currentNotes[existingIndex].id, savedAt: new Date().toISOString() };
+    } else {
+      // Prepend new note
+      updatedNotes = [note, ...currentNotes];
+    }
+
+    this.savedNotesSubject.next(updatedNotes);
+    try {
+      localStorage.setItem(this.getNotesKey(), JSON.stringify(updatedNotes));
+    } catch (e) {
+      console.error('Failed to persist saved notes to localStorage', e);
+    }
+  }
+
+  /**
+   * Get all saved topic notes
+   */
+  public getSavedTopicNotes(): TopicNote[] {
+    return this.savedNotesSubject.value;
+  }
+
+  /**
+   * Get specific saved topic note by ID
+   */
+  public getSavedTopicNoteById(id: string): TopicNote | undefined {
+    return this.savedNotesSubject.value.find(n => n.id === id);
+  }
+
+  /**
+   * Check if a topic or note is already saved
+   */
+  public isTopicSaved(topicTitleOrId: string, subject?: string): boolean {
+    const notes = this.savedNotesSubject.value;
+    return notes.some(n => 
+      n.id === topicTitleOrId || 
+      (n.topicTitle.toLowerCase() === topicTitleOrId.toLowerCase() && (!subject || n.subject.toLowerCase() === subject.toLowerCase()))
+    );
+  }
+
+  /**
+   * Delete a saved topic note by ID
+   */
+  public deleteTopicNote(id: string): void {
+    const currentNotes = this.savedNotesSubject.value;
+    const updatedNotes = currentNotes.filter(n => n.id !== id);
+    this.savedNotesSubject.next(updatedNotes);
+    try {
+      localStorage.setItem(this.getNotesKey(), JSON.stringify(updatedNotes));
+    } catch (e) {
+      console.error('Failed to update notes after deletion', e);
+    }
+  }
+
   public clearAllData(): void {
     localStorage.removeItem(this.getAttemptsKey());
     localStorage.removeItem(this.getStatsKey());
+    localStorage.removeItem(this.getNotesKey());
     this.attemptsSubject.next([]);
+    this.savedNotesSubject.next([]);
     this.statsSubject.next(this.getDefaultStats());
   }
 

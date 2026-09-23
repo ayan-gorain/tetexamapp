@@ -91,3 +91,22 @@ export interface PreviousYearQuestion {
   explanation: string;
   difficulty: string;
 }
+
+export interface TopicNote {
+  id: string;
+  userId?: string;
+  topicTitle: string;
+  subject: TETSubject | string;
+  sourceQuestion?: string;
+  sourceExplanation?: string;
+  coreConcept: string;
+  keyPoints: string[];
+  realLifeExample?: string;
+  memoryMnemonics?: string;
+  commonMistakes?: string[];
+  examTakeaways: string[];
+  savedAt: string;
+  language?: 'Bengali' | 'English';
+  tags?: string[];
+}
+

@@ -9,7 +9,7 @@ import { QuizService } from '../../services/quiz.service';
 import { LanguageService } from '../../services/language.service';
 import { AuthService } from '../../services/auth.service';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
-import { UserStats, QuizAttempt, TET_SUBJECTS } from '../../shared/models/quiz.model';
+import { UserStats, QuizAttempt, TET_SUBJECTS, TopicNote } from '../../shared/models/quiz.model';
 
 @Component({
   selector: 'app-dashboard',
@@ -36,11 +36,13 @@ export class DashboardComponent implements OnInit {
   };
 
   public recentAttempts: QuizAttempt[] = [];
+  public savedNotes: TopicNote[] = [];
   public weakestSubject: string = '';
   public isGenerating = false;
   public apiErrorMessage = '';
   public currentUser: User | null = null;
   public showAllResultsModal: boolean = false;
+
 
   constructor(
     private storageService: StorageService,
@@ -68,6 +70,11 @@ export class DashboardComponent implements OnInit {
 
     this.storageService.attempts$.subscribe(attempts => {
       this.recentAttempts = attempts;
+      this.cdr.markForCheck();
+    });
+
+    this.storageService.savedNotes$.subscribe(notes => {
+      this.savedNotes = notes || [];
       this.cdr.markForCheck();
     });
 

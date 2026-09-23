@@ -3,14 +3,16 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { QuizService } from '../../services/quiz.service';
+import { GeminiService } from '../../services/gemini.service';
 import { LanguageService } from '../../services/language.service';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
-import { QuizQuestion, QuizConfig, TET_SUBJECTS } from '../../shared/models/quiz.model';
+import { QuizQuestion, QuizConfig, TET_SUBJECTS, TopicNote } from '../../shared/models/quiz.model';
+import { TopicStudyModalComponent } from '../../shared/components/topic-study-modal/topic-study-modal.component';
 
 @Component({
   selector: 'app-quiz-screen',
   standalone: true,
-  imports: [CommonModule, RouterModule, TranslatePipe],
+  imports: [CommonModule, RouterModule, TranslatePipe, TopicStudyModalComponent],
   templateUrl: './quiz-screen.component.html',
   styleUrl: './quiz-screen.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -25,14 +27,20 @@ export class QuizScreenComponent implements OnInit, OnDestroy {
   public showPalette: boolean = true;
   public confirmSubmitModal: boolean = false;
 
+  public isStudyModalOpen: boolean = false;
+  public isGeneratingSimilar: boolean = false;
+  public similarError: string = '';
+
   private subs: Subscription = new Subscription();
 
   constructor(
     private quizService: QuizService,
+    private geminiService: GeminiService,
     private langService: LanguageService,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
+
 
   ngOnInit(): void {
     this.subs.add(
@@ -172,4 +180,76 @@ export class QuizScreenComponent implements OnInit, OnDestroy {
     const pad = (n: number) => n < 10 ? `0${n}` : `${n}`;
     return `${pad(mins)}:${pad(secs)}`;
   }
+
+  public isCurrentAnswered(): boolean {
+    const ans = this.userAnswers[this.currentQuestion.id];
+    return ans !== undefined && ans !== -1;
+  }
+
+  public isCurrentWrong(): boolean {
+    const ans = this.userAnswers[this.currentQuestion.id];
+    return ans !== undefined && ans !== -1 && ans !== this.currentQuestion.correctAnswer;
+  }
+
+  public isCurrentCorrect(): boolean {
+    const ans = this.userAnswers[this.currentQuestion.id];
+    return ans !== undefined && ans === this.currentQuestion.correctAnswer;
+  }
+
+  public openTopicStudyModal(): void {
+    this.isStudyModalOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  public closeTopicStudyModal(): void {
+    this.isStudyModalOpen = false;
+    this.cdr.markForCheck();
+  }
+
+  public generate10SimilarQuestions(): void {
+    this.isGeneratingSimilar = true;
+    this.similarError = '';
+    this.cdr.markForCheck();
+
+    const lang = this.langService.currentLanguage === 'en' ? 'English' : 'Bengali';
+    this.geminiService.generateSimilarQuiz(this.currentQuestion, 10, lang).subscribe({
+      next: (response) => {
+        this.isGeneratingSimilar = false;
+        this.cdr.markForCheck();
+        this.quizService.startQuiz(response, {
+          quizType: 'subject',
+          subject: this.currentQuestion.subject,
+          numberOfQuestions: 10,
+          difficulty: this.currentQuestion.difficulty || 'Medium',
+          language: lang as any,
+          mode: 'practice'
+        });
+      },
+      error: (err: Error) => {
+        this.isGeneratingSimilar = false;
+        this.similarError = err.message || 'Gemini API Error: Unable to generate 10 similar questions.';
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  public startTopicPractice(note: TopicNote): void {
+    const lang = this.langService.currentLanguage === 'en' ? 'English' : 'Bengali';
+    this.geminiService.generateQuizFromTopicNote(note, 10, lang).subscribe({
+      next: (response) => {
+        this.quizService.startQuiz(response, {
+          quizType: 'subject',
+          subject: note.subject,
+          numberOfQuestions: 10,
+          difficulty: 'Medium',
+          language: lang as any,
+          mode: 'practice'
+        });
+      },
+      error: (err: Error) => {
+        alert(err.message || 'Gemini API Error: Unable to generate practice quiz for this topic.');
+      }
+    });
+  }
 }
+

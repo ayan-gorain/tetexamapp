@@ -1,0 +1,156 @@
+.modal-backdrop-custom {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 1050;
+}
+
+.modal-wrapper-custom {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 1055;
+  pointer-events: none;
+}
+
+.topic-modal-card {
+  background: #ffffff;
+  width: 100%;
+  max-width: 720px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+.modal-header-gradient {
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+}
+
+.bg-white-20 {
+  background-color: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(4px);
+}
+
+.btn-close-custom {
+  background: rgba(255, 255, 255, 0.2);
+  width: 36px;
+  height: 36px;
+  transition: all 0.2s ease;
+}
+
+.btn-close-custom:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(1.05);
+}
+
+.modal-body-scrollable {
+  overflow-y: auto;
+  flex-grow: 1;
+  background-color: #f8fafc;
+}
+
+.section-icon-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.88rem;
+  flex-shrink: 0;
+}
+
+.mnemonic-card {
+  background: #fffdf5;
+  border-color: #fcd34d !important;
+}
+
+.bg-emerald-50 {
+  background-color: #ecfdf5;
+}
+
+.border-emerald-200 {
+  border-color: #a7f3d0 !important;
+}
+
+.bg-emerald-100 {
+  background-color: #d1fae5;
+}
+
+.text-emerald-800 {
+  color: #065f46;
+}
+
+.text-emerald-950 {
+  color: #022c22;
+}
+
+.text-emerald-900 {
+  color: #064e3b;
+}
+
+.bg-rose-50 {
+  background-color: #fff1f2;
+}
+
+.border-rose-200 {
+  border-color: #fecdd3 !important;
+}
+
+.bg-rose-100 {
+  background-color: #ffe4e6;
+}
+
+.bg-purple-50 {
+  background-color: #faf5ff;
+}
+
+.border-purple-200 {
+  border-color: #e9d5ff !important;
+}
+
+.bg-purple-100 {
+  background-color: #f3e8ff;
+}
+
+.text-purple-800 {
+  color: #6b21a8;
+}
+
+.text-purple-950 {
+  color: #3b0764;
+}
+
+.text-purple {
+  color: #7e22ce;
+}
+
+.shadow-xs {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.max-w-500 {
+  max-width: 500px;
+}
+
+@media (max-width: 576px) {
+  .topic-modal-card {
+    max-height: 96vh;
+    border-radius: 1rem !important;
+  }
+}

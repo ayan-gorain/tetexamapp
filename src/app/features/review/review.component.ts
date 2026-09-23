@@ -5,12 +5,13 @@ import { QuizService } from '../../services/quiz.service';
 import { GeminiService } from '../../services/gemini.service';
 import { LanguageService } from '../../services/language.service';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
-import { QuizAttempt, QuizQuestion, TET_SUBJECTS } from '../../shared/models/quiz.model';
+import { QuizAttempt, QuizQuestion, TET_SUBJECTS, TopicNote } from '../../shared/models/quiz.model';
+import { TopicStudyModalComponent } from '../../shared/components/topic-study-modal/topic-study-modal.component';
 
 @Component({
   selector: 'app-review',
   standalone: true,
-  imports: [CommonModule, RouterModule, TranslatePipe],
+  imports: [CommonModule, RouterModule, TranslatePipe, TopicStudyModalComponent],
   templateUrl: './review.component.html',
   styleUrl: './review.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -27,6 +28,10 @@ export class ReviewComponent implements OnInit {
 
   public similarLoading: { [questionId: number]: boolean } = {};
   public similarError: { [questionId: number]: string } = {};
+
+  public selectedQuestionForStudy: QuizQuestion | null = null;
+  public isStudyModalOpen: boolean = false;
+
 
   constructor(
     private quizService: QuizService,
@@ -149,4 +154,36 @@ export class ReviewComponent implements OnInit {
       }
     });
   }
+
+  public openTopicStudyModal(q: QuizQuestion): void {
+    this.selectedQuestionForStudy = q;
+    this.isStudyModalOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  public closeTopicStudyModal(): void {
+    this.isStudyModalOpen = false;
+    this.selectedQuestionForStudy = null;
+    this.cdr.markForCheck();
+  }
+
+  public startTopicPractice(note: TopicNote): void {
+    const lang = this.langService.currentLanguage === 'en' ? 'English' : 'Bengali';
+    this.geminiService.generateQuizFromTopicNote(note, 10, lang).subscribe({
+      next: (response) => {
+        this.quizService.startQuiz(response, {
+          quizType: 'subject',
+          subject: note.subject,
+          numberOfQuestions: 10,
+          difficulty: 'Medium',
+          language: lang as any,
+          mode: 'practice'
+        });
+      },
+      error: (err: Error) => {
+        alert(err.message || 'Gemini API Error: Unable to generate practice quiz for this topic.');
+      }
+    });
+  }
 }
+

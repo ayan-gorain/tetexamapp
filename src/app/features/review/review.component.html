@@ -137,29 +137,42 @@
       <i class="bi bi-exclamation-triangle-fill me-1"></i> {{ similarError[q.id] }}
     </div>
 
-    <!-- AI Action Buttons -->
-    <div class="d-flex flex-wrap gap-2 pt-2 border-top">
-      <button
-        (click)="requestAiExplanation(q)"
-        [disabled]="aiExplanationLoading[q.id]"
-        class="btn btn-sm btn-outline-primary rounded-pill px-3 d-inline-flex align-items-center gap-1"
-      >
-        <i class="bi bi-lightbulb"></i>
-        <span>{{ 'review.explainWithAi' | translate }}</span>
-      </button>
+    <!-- Targeted Practice & Topic Tutor Action Area (Stacked Buttons) -->
+    <div class="p-3 rounded-3 mt-3 border" [ngClass]="isUserIncorrect(q) ? 'bg-amber-50 border-warning' : 'bg-light'">
+      <div class="d-flex flex-column gap-2">
+        <!-- Button 1: 10 Practice Questions on this question / topic -->
+        <button
+          (click)="generateSimilarQuiz(q)"
+          [disabled]="similarLoading[q.id]"
+          class="btn btn-warning text-dark fw-bold rounded-pill px-4 py-2.5 d-flex align-items-center justify-content-center gap-2 shadow-xs w-100"
+          style="min-height: 44px; font-size: 0.92rem;"
+        >
+          <span *ngIf="similarLoading[q.id]" class="spinner-border spinner-border-sm" role="status"></span>
+          <i *ngIf="!similarLoading[q.id]" class="bi bi-lightning-charge-fill text-dark fs-6"></i>
+          <span>{{ similarLoading[q.id] ? ('review.generatingSimilarQuiz' | translate) : ('review.similarQuizBtn' | translate) }}</span>
+        </button>
 
-      <button
-        (click)="generateSimilarQuiz(q)"
-        [disabled]="similarLoading[q.id]"
-        class="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-3 d-inline-flex align-items-center gap-1 shadow-xs"
-      >
-        <span *ngIf="similarLoading[q.id]" class="spinner-border spinner-border-sm me-1" role="status"></span>
-        <i *ngIf="!similarLoading[q.id]" class="bi bi-lightning-charge-fill text-dark"></i>
-        <span>{{ similarLoading[q.id] ? ('review.generatingSimilarQuiz' | translate) : ('review.similarQuizBtn' | translate) }}</span>
-      </button>
+        <!-- Button 2 (Directly Below Button 1): Learn this Topic (AI Study Notes) -->
+        <button
+          (click)="openTopicStudyModal(q)"
+          class="btn btn-primary text-white fw-bold rounded-pill px-4 py-2.5 d-flex align-items-center justify-content-center gap-2 shadow-sm w-100"
+          style="min-height: 44px; font-size: 0.92rem;"
+        >
+          <i class="bi bi-mortarboard-fill fs-6"></i>
+          <span>{{ 'review.learnTopicBtn' | translate }}</span>
+        </button>
+      </div>
     </div>
   </div>
 </div>
+
+<!-- Reusable Topic Study Modal Component -->
+<app-topic-study-modal
+  [isOpen]="isStudyModalOpen"
+  [question]="selectedQuestionForStudy"
+  (close)="closeTopicStudyModal()"
+  (practiceTopic)="startTopicPractice($event)"
+></app-topic-study-modal>
 
 <!-- Empty State -->
 <ng-template #noAttempt>
@@ -174,3 +187,4 @@
     </div>
   </div>
 </ng-template>
+

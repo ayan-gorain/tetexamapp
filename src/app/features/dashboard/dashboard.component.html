@@ -307,6 +307,49 @@
     </button>
   </div>
 
+  <!-- Quick Access: Saved Study Notes Vault Card -->
+  <div class="tet-card mb-4 bg-white border shadow-sm">
+    <div class="tet-card-body p-3 p-sm-4 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+      <div class="flex-grow-1">
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <span class="badge bg-primary text-white fw-bold px-2 py-0.5 rounded-pill small">
+            <i class="bi bi-journal-bookmark-fill me-1"></i> {{ 'notes.vaultBadge' | translate }}
+          </span>
+          <span *ngIf="savedNotes.length > 0" class="badge bg-primary-subtle text-primary rounded-pill small font-display">
+            {{ savedNotes.length }} {{ 'notes.totalNotes' | translate }}
+          </span>
+        </div>
+        <h5 class="mb-1 fs-6 fw-bold text-dark font-display">
+          {{ 'dashboard.savedNotesTitle' | translate }}
+        </h5>
+        <p class="text-muted small bengali-text mb-2.5" style="font-size: 0.86rem; line-height: 1.5;">
+          {{ 'dashboard.savedNotesDesc' | translate }}
+        </p>
+
+        <!-- Preview Recent 3 Saved Topics -->
+        <div *ngIf="savedNotes.length > 0" class="d-flex flex-wrap gap-1.5">
+          <a
+            *ngFor="let n of savedNotes.slice(0, 3)"
+            routerLink="/saved-notes"
+            class="btn btn-sm btn-light border rounded-pill px-2.5 py-1 text-decoration-none fw-semibold text-dark shadow-xs d-inline-flex align-items-center gap-1"
+            style="font-size: 0.78rem;"
+          >
+            <i class="bi bi-lightbulb-fill text-warning"></i>
+            <span class="text-truncate" style="max-width: 220px;">{{ n.topicTitle }}</span>
+          </a>
+        </div>
+        <div *ngIf="savedNotes.length === 0" class="small text-muted bengali-text">
+          {{ 'dashboard.noSavedNotes' | translate }}
+        </div>
+      </div>
+
+      <a routerLink="/saved-notes" class="btn btn-primary rounded-pill px-4 py-2 w-100 w-md-auto text-center flex-shrink-0 fw-bold shadow-sm d-inline-flex align-items-center justify-content-center gap-1.5">
+        <i class="bi bi-journal-check"></i>
+        <span>{{ 'dashboard.viewSavedNotes' | translate }}</span>
+      </a>
+    </div>
+  </div>
+
   <!-- Quick Access / PYQ Explorer Card -->
   <div class="tet-card mb-4 bg-white border shadow-sm">
     <div class="tet-card-body p-3 p-sm-4 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">

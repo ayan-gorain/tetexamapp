@@ -1,0 +1,226 @@
+<!-- Backdrop -->
+<div class="modal-backdrop-custom animate__animated animate__fadeIn" *ngIf="isOpen" (click)="closeModal()"></div>
+
+<!-- Modal Container -->
+<div class="modal-wrapper-custom" *ngIf="isOpen" tabindex="-1" role="dialog">
+  <div class="topic-modal-card shadow-2xl rounded-4 animate__animated animate__zoomIn">
+    
+    <!-- Modal Header -->
+    <div class="modal-header-gradient p-3.5 p-md-4 text-white d-flex justify-content-between align-items-start rounded-top-4 position-relative overflow-hidden">
+      <div class="position-relative z-1 flex-grow-1 me-2">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+          <span class="badge bg-white text-dark rounded-pill px-3 py-1 font-display fw-bold shadow-xs">
+            <i class="bi bi-stars text-primary me-1"></i> {{ 'notes.title' | translate }}
+          </span>
+          <span *ngIf="note" class="badge bg-white-20 text-white rounded-pill px-2.5 py-1">
+            {{ getSubjectDisplayName(note.subject) }}
+          </span>
+          <span *ngIf="isSaved" class="badge bg-success text-white rounded-pill px-2.5 py-1 animate__animated animate__heartBeat">
+            <i class="bi bi-bookmark-check-fill me-1"></i> {{ 'notes.savedSuccess' | translate }}
+          </span>
+        </div>
+
+        <h3 class="fw-bold font-display text-white mb-1 fs-4 lh-sm">
+          <span *ngIf="note">{{ note.topicTitle }}</span>
+          <span *ngIf="!note && isLoading">{{ 'notes.generating' | translate }}</span>
+          <span *ngIf="!note && !isLoading">{{ 'notes.title' | translate }}</span>
+        </h3>
+        <p class="text-white-75 small mb-0 bengali-text" style="font-size: 0.85rem;">
+          {{ 'notes.subtitle' | translate }}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="btn-close-custom btn rounded-circle d-flex align-items-center justify-content-center text-white border-0"
+        (click)="closeModal()"
+        aria-label="Close"
+      >
+        <i class="bi bi-x-lg fs-5"></i>
+      </button>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="p-5 text-center my-4">
+      <div class="spinner-grow text-primary mb-3" style="width: 3.5rem; height: 3.5rem;" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <h5 class="fw-bold text-dark font-display mb-2">{{ 'notes.generating' | translate }}</h5>
+      <p class="text-muted small max-w-500 mx-auto bengali-text">
+        Gemini AI শিক্ষাতাত্ত্বিক মডেল প্রশ্নটি বিশ্লেষণ করে গভীর ধারণা, বাস্তব প্রয়োগ ও পরীক্ষায় মনে রাখার সহজ কৌশল সাজাচ্ছে...
+      </p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="errorMessage && !isLoading" class="p-4 m-3 bg-danger-subtle rounded-3 border border-danger">
+      <div class="d-flex align-items-center gap-2 text-danger fw-bold mb-2">
+        <i class="bi bi-exclamation-octagon-fill fs-5"></i>
+        <span>ত্রুটি (Error Generating Notes)</span>
+      </div>
+      <p class="small text-danger mb-3 font-monospace">{{ errorMessage }}</p>
+      <button (click)="retryGeneration()" class="btn btn-sm btn-danger rounded-pill px-4 fw-bold">
+        <i class="bi bi-arrow-clockwise me-1"></i> পুনরায় চেষ্টা করুন (Retry)
+      </button>
+    </div>
+
+    <!-- Modal Content (Rendered when note is loaded) -->
+    <div *ngIf="note && !isLoading" class="modal-body-scrollable p-3.5 p-md-4">
+      
+      <!-- Source Question Preview Box (if available) -->
+      <div *ngIf="note.sourceQuestion" class="source-question-box p-3 rounded-3 mb-3 bg-light border">
+        <div class="small fw-bold text-muted text-uppercase mb-1 d-flex align-items-center gap-1.5" style="font-size: 0.75rem;">
+          <i class="bi bi-patch-question-fill text-primary"></i>
+          <span>{{ 'notes.sourceQ' | translate }}</span>
+        </div>
+        <div class="bengali-text text-dark small fw-medium">
+          {{ note.sourceQuestion }}
+        </div>
+      </div>
+
+      <!-- 1. Core Concept Card -->
+      <div class="study-section-card p-3.5 rounded-3 mb-3 border bg-white shadow-xs">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <div class="section-icon-badge bg-primary-subtle text-primary">
+            <i class="bi bi-bullseye"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-0 fs-6 font-display">
+            {{ 'notes.coreConcept' | translate }}
+          </h5>
+        </div>
+        <p class="bengali-text text-dark mb-0 small lh-base" style="font-size: 0.93rem;">
+          {{ note.coreConcept }}
+        </p>
+      </div>
+
+      <!-- 2. Memory Mnemonics & Shortcut Tricks (High Priority Callout) -->
+      <div *ngIf="note.memoryMnemonics" class="mnemonic-card p-3.5 rounded-3 mb-3 border border-warning shadow-xs">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <div class="section-icon-badge bg-warning text-dark">
+            <i class="bi bi-lightbulb-fill"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-0 fs-6 font-display">
+            {{ 'notes.memoryMnemonics' | translate }}
+          </h5>
+          <span class="badge bg-warning text-dark rounded-pill px-2 py-0.5 ms-auto small" style="font-size: 0.7rem;">
+            Never Forget Trick 🔥
+          </span>
+        </div>
+        <div class="bengali-text text-dark small fw-semibold p-2.5 bg-warning-subtle rounded-2 border border-warning border-opacity-50">
+          {{ note.memoryMnemonics }}
+        </div>
+      </div>
+
+      <!-- 3. Key Points & Pedagogical Principles -->
+      <div *ngIf="note.keyPoints && note.keyPoints.length > 0" class="study-section-card p-3.5 rounded-3 mb-3 border bg-white shadow-xs">
+        <div class="d-flex align-items-center gap-2 mb-2.5">
+          <div class="section-icon-badge bg-info-subtle text-info">
+            <i class="bi bi-card-checklist"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-0 fs-6 font-display">
+            {{ 'notes.keyPoints' | translate }}
+          </h5>
+        </div>
+        <ul class="keypoints-list ps-3 mb-0 small bengali-text">
+          <li *ngFor="let point of note.keyPoints" class="mb-2 text-dark lh-base">
+            {{ point }}
+          </li>
+        </ul>
+      </div>
+
+      <!-- 4. Real Life / Classroom Example -->
+      <div *ngIf="note.realLifeExample" class="study-section-card p-3.5 rounded-3 mb-3 border bg-emerald-50 border-emerald-200 shadow-xs">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <div class="section-icon-badge bg-emerald-100 text-emerald-800">
+            <i class="bi bi-easel2-fill"></i>
+          </div>
+          <h5 class="fw-bold text-emerald-950 mb-0 fs-6 font-display">
+            {{ 'notes.realLifeExample' | translate }}
+          </h5>
+        </div>
+        <p class="bengali-text text-emerald-900 mb-0 small lh-base">
+          {{ note.realLifeExample }}
+        </p>
+      </div>
+
+      <!-- 5. Common TET Mistakes to Avoid -->
+      <div *ngIf="note.commonMistakes && note.commonMistakes.length > 0" class="study-section-card p-3.5 rounded-3 mb-3 border bg-rose-50 border-rose-200 shadow-xs">
+        <div class="d-flex align-items-center gap-2 mb-2.5">
+          <div class="section-icon-badge bg-rose-100 text-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+          </div>
+          <h5 class="fw-bold text-danger mb-0 fs-6 font-display">
+            {{ 'notes.commonMistakes' | translate }}
+          </h5>
+          <span class="badge bg-danger text-white rounded-pill px-2 py-0.5 ms-auto small" style="font-size: 0.7rem;">
+            TET Traps ⚠️
+          </span>
+        </div>
+        <ul class="traps-list ps-3 mb-0 small bengali-text text-dark">
+          <li *ngFor="let mistake of note.commonMistakes" class="mb-1.5 lh-base">
+            {{ mistake }}
+          </li>
+        </ul>
+      </div>
+
+      <!-- 6. Quick Revision Takeaways -->
+      <div *ngIf="note.examTakeaways && note.examTakeaways.length > 0" class="study-section-card p-3.5 rounded-3 mb-2 border bg-purple-50 border-purple-200 shadow-xs">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <div class="section-icon-badge bg-purple-100 text-purple-800">
+            <i class="bi bi-journal-bookmark-fill"></i>
+          </div>
+          <h5 class="fw-bold text-purple-950 mb-0 fs-6 font-display">
+            {{ 'notes.examTakeaways' | translate }}
+          </h5>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          <div *ngFor="let takeaway of note.examTakeaways" class="takeaway-pill p-2 bg-white rounded-2 border border-purple-200 small bengali-text text-dark flex-grow-1">
+            <i class="bi bi-check2-circle text-purple me-1"></i> {{ takeaway }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Footer Actions -->
+    <div *ngIf="note && !isLoading" class="modal-footer-custom p-3 bg-light border-top rounded-bottom-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <div class="d-flex align-items-center gap-2">
+        <!-- Save Note Button -->
+        <button
+          (click)="toggleSave()"
+          class="btn btn-sm rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-1.5 shadow-xs transition-all"
+          [ngClass]="isSaved ? 'btn-success text-white' : 'btn-outline-primary bg-white'"
+        >
+          <i [class]="isSaved ? 'bi bi-bookmark-check-fill' : 'bi bi-bookmark-plus'"></i>
+          <span>{{ isSaved ? ('notes.savedSuccess' | translate) : ('notes.saveBtn' | translate) }}</span>
+        </button>
+
+        <!-- Copy Notes Button -->
+        <button
+          (click)="copyNotesToClipboard()"
+          class="btn btn-sm btn-outline-secondary bg-white rounded-pill px-3 py-2 d-flex align-items-center gap-1.5 shadow-xs"
+        >
+          <i [class]="copyFeedback ? 'bi bi-check2 text-success' : 'bi bi-clipboard'"></i>
+          <span>{{ copyFeedback ? ('notes.copied' | translate) : ('notes.copyBtn' | translate) }}</span>
+        </button>
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        <!-- Practice 10 Questions on this Topic Button -->
+        <button
+          (click)="onPracticeClick()"
+          class="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-3.5 py-2 d-flex align-items-center gap-1.5 shadow-sm"
+        >
+          <i class="bi bi-lightning-charge-fill"></i>
+          <span>{{ 'notes.practiceDrillBtn' | translate }}</span>
+        </button>
+
+        <button
+          (click)="closeModal()"
+          class="btn btn-sm btn-secondary rounded-pill px-3 py-2"
+        >
+          {{ 'dashboard.modalClose' | translate }}
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
