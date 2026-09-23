@@ -56,9 +56,6 @@
         <button (click)="fetchWithGemini()" [disabled]="isLoadingAi" class="btn btn-sm btn-danger rounded-pill px-3 fw-bold me-2">
           <i class="bi bi-arrow-clockwise me-1"></i> Retry with Gemini AI
         </button>
-        <button (click)="loadOfflineFallback()" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
-          Load Built-in Archive
-        </button>
       </div>
     </div>
     <button type="button" class="btn-close" (click)="apiErrorMessage = ''" aria-label="Close"></button>
@@ -110,6 +107,32 @@
       >
         <i [class]="'bi ' + s.icon + ' me-1'"></i> {{ currentLang === 'en' ? s.nameEn : s.nameBn }}
       </button>
+    </div>
+
+    <!-- 2.1 Available Topics Filter (if topics exist) -->
+    <div *ngIf="availableTopics.length > 0" class="mb-3 pt-2 border-top">
+      <label class="form-label small text-muted fw-bold text-uppercase mb-2 d-flex align-items-center gap-1">
+        <i class="bi bi-tags-fill text-primary"></i> বিষয়ভিত্তিক ধারণা / অধ্যায় (Topic / Concept):
+      </label>
+      <div class="d-flex flex-wrap gap-1.5">
+        <button
+          type="button"
+          class="btn btn-xs rounded-pill px-2.5 py-1 fw-bold"
+          [ngClass]="selectedTopic === 'all' ? 'btn-dark text-white' : 'btn-outline-secondary'"
+          (click)="selectTopic('all')"
+        >
+          সব অধ্যায় (All Topics)
+        </button>
+        <button
+          *ngFor="let top of availableTopics"
+          type="button"
+          class="btn btn-xs rounded-pill px-2.5 py-1 fw-bold"
+          [ngClass]="selectedTopic === top ? 'btn-primary text-white shadow-xs' : 'btn-outline-secondary'"
+          (click)="selectTopic(top)"
+        >
+          {{ top }}
+        </button>
+      </div>
     </div>
 
     <!-- 3. Question Count & Primary AI Generation Trigger -->
@@ -166,7 +189,7 @@
 
   <!-- Result Counter Bar -->
   <div class="d-flex justify-content-between align-items-center mb-3 px-1">
-    <div class="d-flex align-items-center gap-2">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
       <span class="badge bg-primary rounded-pill px-2.5 py-1 fw-bold">
         {{ selectedYear }} TET
       </span>
@@ -175,6 +198,9 @@
       </span>
       <span *ngIf="isAiGenerated" class="badge bg-success-subtle text-success border border-success-subtle rounded-pill small">
         <i class="bi bi-stars me-1"></i> {{ 'pyq.aiGeneratedBadge' | translate }}
+      </span>
+      <span *ngIf="selectedTopic !== 'all'" class="badge bg-info-subtle text-dark border rounded-pill small">
+        <i class="bi bi-tag me-1"></i> {{ selectedTopic }}
       </span>
     </div>
   </div>
@@ -200,15 +226,18 @@
   <div *ngIf="!isLoadingAi">
     <div *ngFor="let q of questions; let i = index" class="tet-card p-3 p-sm-4 mb-4 border shadow-sm bg-white">
       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-        <div class="d-flex align-items-center gap-2">
+        <div class="d-flex flex-wrap align-items-center gap-2">
           <span class="badge bg-primary text-white font-display px-2.5 py-1">
             #{{ i + 1 }}
           </span>
           <span class="badge bg-warning-subtle text-dark border border-warning">
-            <i class="bi bi-calendar-event me-1"></i> {{ selectedYear }} TET
+            <i class="bi bi-calendar-event me-1"></i> {{ q.examName || (selectedYear + ' TET') }}
           </span>
           <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle">
             {{ getSubjectDisplayName(q.subject) }}
+          </span>
+          <span *ngIf="q.topic" class="badge bg-secondary-subtle text-dark border border-secondary-subtle">
+            <i class="bi bi-tag-fill me-1 text-primary"></i>{{ q.topic }}
           </span>
         </div>
         <span class="badge bg-light text-muted border">

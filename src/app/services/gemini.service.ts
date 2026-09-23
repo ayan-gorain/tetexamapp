@@ -3,7 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
-import { QuizQuestion, QuizResponse, QuizAttempt, TET_SUBJECTS } from '../shared/models/quiz.model';
+import { QuizQuestion, QuizResponse, QuizAttempt, PreviousYearQuestion, TET_SUBJECTS } from '../shared/models/quiz.model';
 
 @Injectable({
   providedIn: 'root'
@@ -53,6 +53,23 @@ export class GeminiService {
     const prompt = this.buildMixedQuizPrompt(numberOfQuestions, difficulty, language);
     return this.callGeminiApi(prompt).pipe(
       map(rawResponse => this.parseAndValidateQuizResponse(rawResponse, 'Primary TET Mixed Mock Quiz', language))
+    );
+  }
+
+  /**
+   * Generate authentic PreviousYearQuestion array for a specific TET Year, Subject, and Topic using Gemini AI.
+   * Returns strongly-typed PreviousYearQuestion[] objects with topic, examName, and detailed explanations.
+   */
+  public generatePreviousYearQuestions(
+    year: number | string,
+    subject: string = 'all',
+    numberOfQuestions: number = 10,
+    topic?: string,
+    language: string = 'Bengali'
+  ): Observable<PreviousYearQuestion[]> {
+    const prompt = this.buildPyqPrompt(year, subject, numberOfQuestions, language, topic);
+    return this.callGeminiApi(prompt).pipe(
+      map(rawResponse => this.parseAndValidatePyqResponse(rawResponse, Number(year) || 2023, subject, language))
     );
   }
 
@@ -472,31 +489,37 @@ Required JSON Structure:
     year: number | string,
     subject: string,
     numberOfQuestions: number,
-    language: string
+    language: string,
+    topic?: string
   ): string {
     const isEn = language.toLowerCase() === 'english';
+    const numYear = Number(year) || 2023;
     const subjectScope = subject === 'all'
       ? 'across all 5 core subjects (Child Development & Pedagogy, Bengali, English, Mathematics, Environmental Studies)'
       : `specifically for the subject '${subject}'`;
+    const topicScope = topic && topic !== 'all' ? `focusing on the topic/concept '${topic}'` : '';
 
     return `
 You are an expert on West Bengal Primary Teacher Eligibility Test (WB Primary TET) official question papers and syllabus.
 
-Generate ${numberOfQuestions} authentic or official-pattern multiple-choice questions from the West Bengal Primary TET ${year} Examination (${subjectScope}).
+Generate exactly ${numberOfQuestions} authentic or official-pattern multiple-choice questions from the West Bengal Primary TET ${year} Examination (${subjectScope} ${topicScope}).
 
 Year: ${year} WB Primary TET
+Exam Name: WB Primary TET ${year}
 Subject Scope: ${subject === 'all' ? 'All 5 Subjects balanced' : subject}
+${topic && topic !== 'all' ? `Topic Focus: ${topic}` : ''}
 Number of Questions: ${numberOfQuestions}
 Language: ${isEn ? 'English' : 'Bengali (বাংলা)'}
 
 Requirements:
 1. Questions must reflect the authentic questions, style, syllabus, and pedagogical depth of the WB Primary TET ${year} exam conducted by WBBPE (West Bengal Board of Primary Education).
-2. For ${isEn ? 'English' : 'Bengali'}, ensure natural, accurate Bengali terminology commonly used in WB TET (e.g., বিকাশ, পেডাগজি, ব্যুৎপত্তি, ব্যাকরণ, মূল্যায়ন, ধারণা গঠন).
-3. Each question must have exactly four options.
-4. Exactly one option is correct.
-5. "correctAnswer" must be a 0-indexed integer (0, 1, 2, or 3).
-6. Provide a detailed, step-by-step pedagogical explanation in ${isEn ? 'English' : 'Bengali (বাংলা)'} explaining why the answer is correct according to Primary TET standard and pedagogy.
-7. Return ONLY valid JSON with no markdown formatting.
+2. For ${isEn ? 'English' : 'Bengali'}, ensure natural, accurate Bengali terminology commonly used in WB TET (e.g., বিকাশ, পেডাগজি, ব্যুৎপত্তি, ব্যাকরণ, মূল্যায়ন, ধারণা গঠন, অন্তর্ভুক্তিমূলক শিক্ষা).
+3. Include specific, realistic topic names for each question (e.g., "বিকাশের নীতি ও স্তর", "পেডাগজি ও শিখন", "ব্যাকরণ ও ভাষাতত্ত্ব", "বাস্তুতন্ত্র ও শক্তিপ্রবাহ", "ভগ্নাংশ ও জ্যামিতি", "Grammar & Comprehension").
+4. Each question must have exactly four non-empty options.
+5. Exactly one option is correct.
+6. "correctAnswer" must be a 0-indexed integer (0, 1, 2, or 3).
+7. Provide a detailed, step-by-step pedagogical explanation in ${isEn ? 'English' : 'Bengali (বাংলা)'} explaining why the answer is correct according to Primary TET standard and pedagogy.
+8. Return ONLY valid JSON with no markdown formatting.
 
 Required JSON Structure:
 {
@@ -504,17 +527,121 @@ Required JSON Structure:
   "language": "${isEn ? 'English' : 'Bengali'}",
   "questions": [
     {
-      "id": 1,
+      "id": "pyq-${numYear}-1",
+      "year": ${numYear},
+      "examName": "WB Primary TET ${year}",
       "subject": "Child Development & Pedagogy",
+      "topic": "বিকাশের নীতি ও ধারণা",
       "question": "Question text...",
       "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
       "correctAnswer": 0,
-      "explanation": "Detailed explanation...",
+      "explanation": "Detailed pedagogical explanation...",
       "difficulty": "Medium"
     }
   ]
 }
 `;
+  }
+
+  /**
+   * Parses and validates raw Gemini response into strongly-typed PreviousYearQuestion[]
+   */
+  private parseAndValidatePyqResponse(
+    rawText: string,
+    defaultYear: number,
+    defaultSubject: string,
+    defaultLanguage: string
+  ): PreviousYearQuestion[] {
+    const cleaned = this.extractCleanJson(rawText);
+    let parsed: any;
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch (e) {
+      throw new Error(`JSON_PARSE_ERROR: Failed to parse Gemini response as JSON: ${(e as Error).message}`);
+    }
+
+    let rawQuestions: any[] = [];
+    if (Array.isArray(parsed)) {
+      rawQuestions = parsed;
+    } else if (parsed && Array.isArray(parsed.questions)) {
+      rawQuestions = parsed.questions;
+    } else {
+      throw new Error('Invalid PYQ response structure: questions array missing');
+    }
+
+    const validatedList: PreviousYearQuestion[] = [];
+    for (let i = 0; i < rawQuestions.length; i++) {
+      const q = rawQuestions[i];
+      try {
+        const validated = this.validateSinglePyqQuestion(q, i + 1, defaultYear, defaultSubject);
+        validatedList.push(validated);
+      } catch (err) {
+        console.warn(`Skipping invalid PYQ question at index ${i}:`, err);
+      }
+    }
+
+    if (validatedList.length === 0) {
+      throw new Error('No valid previous year questions could be extracted from Gemini response');
+    }
+
+    return validatedList;
+  }
+
+  private validateSinglePyqQuestion(
+    raw: any,
+    fallbackIndex: number,
+    defaultYear: number,
+    defaultSubject: string
+  ): PreviousYearQuestion {
+    if (!raw || typeof raw !== 'object') {
+      throw new Error('Question must be an object');
+    }
+
+    if (!raw.question || typeof raw.question !== 'string' || raw.question.trim().length === 0) {
+      throw new Error('Question text is missing');
+    }
+
+    if (!Array.isArray(raw.options) || raw.options.length !== 4) {
+      throw new Error('Question must have exactly 4 options');
+    }
+
+    const options = raw.options.map((opt: any) => String(opt || '').trim());
+    if (options.some((opt: string) => opt.length === 0)) {
+      throw new Error('All 4 options must be non-empty');
+    }
+
+    let correctAnswer = Number(raw.correctAnswer);
+    if (isNaN(correctAnswer) || correctAnswer < 0 || correctAnswer > 3) {
+      if (correctAnswer >= 1 && correctAnswer <= 4) {
+        correctAnswer = correctAnswer - 1;
+      } else {
+        correctAnswer = 0;
+      }
+    }
+
+    const year = Number(raw.year) || defaultYear || 2023;
+    const sub = (raw.subject && String(raw.subject).trim().length > 0)
+      ? String(raw.subject).trim()
+      : (defaultSubject !== 'all' ? defaultSubject : 'General');
+    const examName = raw.examName && String(raw.examName).trim().length > 0
+      ? String(raw.examName).trim()
+      : `WB Primary TET ${year}`;
+    const topic = raw.topic && String(raw.topic).trim().length > 0
+      ? String(raw.topic).trim()
+      : `${sub} Pedagogy & Concepts`;
+
+    return {
+      id: raw.id ? `gemini-pyq-${raw.id}` : `gemini-pyq-${year}-${sub.substring(0, 3).toLowerCase()}-${fallbackIndex}-${Date.now() % 10000}`,
+      year: year,
+      examName: examName,
+      subject: sub,
+      topic: topic,
+      question: raw.question.trim(),
+      options: options,
+      correctAnswer: correctAnswer,
+      explanation: raw.explanation ? String(raw.explanation).trim() : 'Detailed pedagogical explanation is unavailable.',
+      difficulty: raw.difficulty || 'Medium'
+    };
   }
 
   /**

@@ -7,7 +7,7 @@ import { GeminiService } from '../../services/gemini.service';
 import { QuizService } from '../../services/quiz.service';
 import { LanguageService } from '../../services/language.service';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
-import { QuizQuestion, TET_SUBJECTS } from '../../shared/models/quiz.model';
+import { PreviousYearQuestion, QuizQuestion, TET_SUBJECTS } from '../../shared/models/quiz.model';
 
 @Component({
   selector: 'app-previous-year',
@@ -22,9 +22,12 @@ export class PreviousYearComponent implements OnInit {
   public allYears: number[] = [2023, 2022, 2021, 2017, 2015, 2014];
   public selectedYear: number = 2023;
   public selectedSubject: string = 'all';
+  public selectedTopic: string = 'all';
+  public availableTopics: string[] = [];
   public selectedCount: number = 10;
+  public searchQuery: string = '';
 
-  public questions: any[] = [];
+  public questions: PreviousYearQuestion[] = [];
   public revealedMap: { [id: string | number]: boolean } = {};
   public aiExplanationMap: { [id: string | number]: string } = {};
   public similarQuestionMap: { [id: string | number]: QuizQuestion } = {};
@@ -48,6 +51,8 @@ export class PreviousYearComponent implements OnInit {
 
   ngOnInit(): void {
     this.currentLang = this.langService.currentLanguage;
+    this.allYears = this.pyqService.getAvailableYears();
+    this.updateAvailableTopics();
 
     this.langService.currentLang$.subscribe(l => {
       this.currentLang = l;
@@ -64,6 +69,7 @@ export class PreviousYearComponent implements OnInit {
       }
       if (params['subject']) {
         this.selectedSubject = params['subject'];
+        this.updateAvailableTopics();
       }
       this.fetchWithGemini();
     });
@@ -71,6 +77,9 @@ export class PreviousYearComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
+  public updateAvailableTopics(): void {
+    this.availableTopics = this.pyqService.getTopicsBySubject(this.selectedSubject);
+  }
 
   public selectYear(year: number): void {
     this.selectedYear = year;
@@ -79,6 +88,13 @@ export class PreviousYearComponent implements OnInit {
 
   public selectSubject(subjectId: string): void {
     this.selectedSubject = subjectId;
+    this.selectedTopic = 'all';
+    this.updateAvailableTopics();
+    this.fetchWithGemini();
+  }
+
+  public selectTopic(topic: string): void {
+    this.selectedTopic = topic;
     this.fetchWithGemini();
   }
 
@@ -100,15 +116,14 @@ export class PreviousYearComponent implements OnInit {
     this.cdr.markForCheck();
 
     const lang = this.langService.currentLanguage === 'en' ? 'English' : 'Bengali';
+    const topicParam = this.selectedTopic === 'all' ? undefined : this.selectedTopic;
 
-    this.geminiService.generatePyqQuiz(this.selectedYear, this.selectedSubject, this.selectedCount, lang).subscribe({
+    this.pyqService.fetchPyqFromGemini(this.selectedYear, this.selectedSubject, this.selectedCount, topicParam, lang).subscribe({
       next: (response) => {
         this.isLoadingAi = false;
         this.isAiGenerated = true;
-        this.questions = response.questions.map((q, idx) => ({
-          ...q,
-          id: `pyq_${this.selectedYear}_${idx + 1}`
-        }));
+        this.questions = response;
+        this.updateAvailableTopics();
         this.cdr.markForCheck();
       },
       error: (err: Error) => {
@@ -124,10 +139,13 @@ export class PreviousYearComponent implements OnInit {
   public loadOfflineFallback(): void {
     this.pyqService.filterQuestions({
       year: this.selectedYear as any,
-      subject: this.selectedSubject === 'all' ? 'all' : this.selectedSubject
+      subject: this.selectedSubject === 'all' ? 'all' : this.selectedSubject,
+      topic: this.selectedTopic === 'all' ? 'all' : this.selectedTopic,
+      searchQuery: this.searchQuery
     }).subscribe(res => {
       this.isAiGenerated = false;
       this.questions = res.slice(0, this.selectedCount);
+      this.updateAvailableTopics();
       this.cdr.markForCheck();
     });
   }
@@ -137,7 +155,7 @@ export class PreviousYearComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
-  public explainWithAi(q: any): void {
+  public explainWithAi(q: PreviousYearQuestion): void {
     this.isExplainingMap[q.id] = true;
     this.cdr.markForCheck();
 
@@ -157,7 +175,7 @@ export class PreviousYearComponent implements OnInit {
     });
   }
 
-  public generateSimilarWithAi(q: any): void {
+  public generateSimilarWithAi(q: PreviousYearQuestion): void {
     this.isGeneratingSimilarMap[q.id] = true;
     this.cdr.markForCheck();
 
@@ -169,7 +187,7 @@ export class PreviousYearComponent implements OnInit {
       options: q.options,
       correctAnswer: q.correctAnswer,
       explanation: q.explanation || '',
-      difficulty: q.difficulty || 'Medium'
+      difficulty: (q.difficulty as any) || 'Medium'
     };
 
     this.geminiService.generateSimilarQuiz(baseQ, 10, lang).subscribe({
@@ -181,7 +199,7 @@ export class PreviousYearComponent implements OnInit {
           quizType: 'subject',
           subject: q.subject,
           numberOfQuestions: 10,
-          difficulty: q.difficulty || 'Medium',
+          difficulty: (q.difficulty as any) || 'Medium',
           language: lang as any,
           mode: 'practice'
         });
